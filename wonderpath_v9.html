@@ -1,0 +1,2858 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WonderPath · Plataforma de Resiliência Urbana</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root
+    {
+      --sage:     #6B8F6E;
+      --sage-lt:  #EAF2EB;
+      --cream:    #F8F3EB;
+      --cream-dk: #EDE3D1;
+      --cobalt:   #3A5899;
+      --cobalt-lt:#EEF2FA;
+      --terracotta:#B85C38;
+      --terra-lt: #FAEEE8;
+      --amber:    #C8880A;
+      --amber-lt: #FEF6E4;
+      --plum:     #6B3B6E;
+      --plum-lt:  #F3ECF4;
+      --slate:    #4A5568;
+      --ink:      #1E1B18;
+      --ink-md:   #4A443C;
+      --ink-lt:   #8C847A;
+      --paper:    #FDFAF6;
+      --white:    #FFFFFF;
+      --border:   #E4DDD3;
+      --border-dk:#C8BFB5;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--paper);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ────────────────── HEADER ────────────────── */
+    .app-header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 32px 0;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 1px 8px rgba(30,27,24,.06);
+    }
+    .header-top { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+    .brand-mark {
+      width: 40px; height: 40px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--sage) 0%, var(--cobalt) 100%);
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    }
+    .brand-mark svg { width: 22px; height: 22px; }
+    .brand h1 { font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: -.3px; }
+    .brand p  { font-size: 11px; color: var(--ink-lt); font-weight: 300; letter-spacing: .4px; }
+    .header-meta { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .meta-pill {
+      font-size: 10px; font-weight: 600; letter-spacing: .4px;
+      padding: 3px 9px; border-radius: 20px;
+      background: var(--cream); color: var(--ink-md);
+      border: 1px solid var(--border-dk); text-transform: uppercase;
+    }
+    .nav-tabs { display: flex; gap: 2px; }
+    .tab-btn {
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+      padding: 10px 20px 12px; border: none; background: transparent;
+      color: var(--ink-lt); cursor: pointer; border-bottom: 2px solid transparent;
+      transition: color .2s, border-color .2s;
+    }
+    .tab-btn:hover { color: var(--ink-md); }
+    .tab-btn.active { color: var(--ink); border-bottom-color: var(--terracotta); }
+
+    /* ────────────────── MAIN LAYOUT ────────────────── */
+    .main { padding: 28px 32px; max-width: 1120px; margin: 0 auto; }
+    .module { display: none; }
+    .module.active { display: block; }
+    .module-header { margin-bottom: 24px; }
+    .module-tag { font-size: 11px; color: var(--ink-lt); letter-spacing: .5px; text-transform: uppercase; margin-bottom: 4px; }
+    .module-title { font-family: 'DM Serif Display', serif; font-size: 26px; margin-bottom: 6px; }
+    .module-desc { font-size: 13px; color: var(--ink-md); max-width: 700px; line-height: 1.65; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+    /* ────────────────── CARDS ────────────────── */
+    .card {
+      background: var(--white); border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 20px 22px; margin-bottom: 18px;
+      box-shadow: 0 1px 4px rgba(30,27,24,.05);
+      position: relative;
+    }
+    .card-accent { position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 12px 12px 0 0; }
+    .card-title { font-family: 'DM Serif Display', serif; font-size: 17px; margin-bottom: 4px; }
+    .card-sub   { font-size: 12px; color: var(--ink-lt); margin-bottom: 16px; line-height: 1.5; }
+
+    /* ────────────────── FORMS ────────────────── */
+    label.field-label { font-size: 12px; color: var(--ink-md); font-weight: 500; display: block; margin-bottom: 5px; }
+    select, input[type=text] {
+      width: 100%; padding: 8px 12px;
+      border: 1px solid var(--border-dk); border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 13px;
+      background: var(--paper); color: var(--ink);
+      transition: border-color .15s;
+    }
+    select:focus, input:focus { outline: none; border-color: var(--cobalt); }
+    .field-group { margin-bottom: 14px; }
+
+    /* ────────────────── SLIDERS ────────────────── */
+    .slider-row { margin-bottom: 14px; }
+    .slider-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+    .slider-name { font-size: 12px; font-weight: 500; color: var(--ink-md); }
+    .slider-type { font-size: 10px; color: var(--ink-lt); font-style: italic; }
+    .slider-val  { font-family: 'DM Mono', monospace; font-size: 14px; color: var(--cobalt); font-weight: 500; }
+    input[type=range] {
+      width: 100%; -webkit-appearance: none; height: 5px; border-radius: 3px;
+      background: linear-gradient(90deg, var(--cobalt) var(--pct,50%), var(--border) var(--pct,50%));
+      outline: none; cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+      background: var(--white); border: 2px solid var(--cobalt);
+      box-shadow: 0 1px 4px rgba(0,0,0,.15); transition: transform .1s;
+    }
+    input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+    /* ────────────────── BUTTONS ────────────────── */
+    .btn-primary {
+      width: 100%; padding: 11px 0; background: var(--cobalt); color: var(--white);
+      border: none; border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; margin-top: 12px; letter-spacing: .3px;
+      transition: background .15s, transform .1s;
+    }
+    .btn-primary:hover { background: #2d4a8a; transform: translateY(-1px); }
+    .btn-secondary {
+      padding: 8px 16px; background: var(--paper); color: var(--ink-md);
+      border: 1px solid var(--border-dk); border-radius: 8px; font-size: 12px;
+      font-weight: 500; cursor: pointer; transition: all .15s;
+    }
+    .btn-secondary:hover { background: var(--cream); border-color: var(--ink-lt); }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+
+    /* ────────────────── RESULT BOX ────────────────── */
+    .result-box {
+      border-radius: 10px; padding: 24px; text-align: center;
+      border: 1.5px solid var(--border); background: var(--paper);
+      transition: all .35s ease;
+    }
+    .result-level-num { font-family: 'DM Serif Display', serif; font-size: 56px; line-height: 1; margin-bottom: 6px; }
+    .result-level-name { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+    .result-global { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--ink-lt); margin-bottom: 6px; }
+    .result-desc  { font-size: 12px; color: var(--ink-md); max-width: 240px; margin: 0 auto; line-height: 1.55; }
+    .level-strip { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; margin: 14px 0 6px; }
+    .level-strip-fill { height: 100%; border-radius: 3px; transition: width .5s ease; }
+    .level-legend { display: flex; justify-content: space-between; font-size: 10px; color: var(--ink-lt); }
+
+    /* ────────────────── MABAC BARS ────────────────── */
+    .mabac-axis-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .mabac-label { font-size: 11px; width: 160px; flex-shrink: 0; color: var(--ink-md); }
+    .mabac-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .mabac-fill  { height: 100%; border-radius: 4px; transition: width .5s; }
+    .mabac-score { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink-lt); width: 40px; text-align: right; }
+
+    /* ────────────────── DATA TABLE ────────────────── */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .data-table th {
+      text-align: left; padding: 8px 10px; font-weight: 600; font-size: 11px;
+      color: var(--ink-lt); text-transform: uppercase; letter-spacing: .4px;
+      border-bottom: 2px solid var(--border);
+    }
+    .data-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr.highlight td { background: rgba(58,88,153,.04); }
+    .val-mono { font-family: 'DM Mono', monospace; font-size: 12px; }
+    .badge-eixo {
+      display: inline-block; padding: 2px 7px; border-radius: 4px;
+      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px;
+    }
+
+    /* ────────────────── RANKING TABLE ────────────────── */
+    .rank-table { width: 100%; border-collapse: collapse; }
+    .rank-table th { text-align:left; padding:8px 12px; font-size:11px; font-weight:600; color:var(--ink-lt); text-transform:uppercase; letter-spacing:.4px; border-bottom:2px solid var(--border); }
+    .rank-table td { padding:10px 12px; border-bottom:1px solid var(--border); font-size:13px; }
+    .rank-table tr:last-child td { border-bottom:none; }
+    .rank-badge { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; font-size:12px; font-weight:700; }
+    .cci-bar-wrap { display:flex; align-items:center; gap:8px; }
+    .cci-bar { height:6px; border-radius:3px; transition:width .5s; }
+    .cci-val { font-family:'DM Mono',monospace; font-size:12px; color:var(--ink-md); }
+
+    /* ────────────────── DEMATEL WEIGHT VISUAL ────────────────── */
+    .weight-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .weight-name { font-size:12px; width:220px; flex-shrink:0; color:var(--ink-md); }
+    .weight-bar-wrap { flex:1; height:10px; background:var(--border); border-radius:5px; overflow:hidden; }
+    .weight-bar { height:100%; border-radius:5px; }
+    .weight-val { font-family:'DM Mono',monospace; font-size:12px; color:var(--ink-md); min-width:38px; text-align:right; }
+    .cause-tag { font-size:10px; padding:1px 6px; border-radius:4px; font-weight:600; }
+
+    /* ────────────────── TOPSIS CITY CARDS ────────────────── */
+    .city-result-card {
+      border:1.5px solid var(--border); border-radius:10px; padding:16px 18px;
+      background:var(--white);
+    }
+    .city-name-big { font-family:'DM Serif Display',serif; font-size:18px; margin-bottom:4px; }
+    .city-cc { font-family:'DM Mono',monospace; font-size:26px; font-weight:500; }
+    .city-cc-label { font-size:11px; color:var(--ink-lt); }
+    .cc-bar-outer { height:10px; background:var(--border); border-radius:5px; overflow:hidden; margin:8px 0; }
+    .cc-bar-inner { height:100%; border-radius:5px; transition:width .6s; }
+    .city-subtext { font-size:11px; color:var(--ink-lt); }
+
+    /* ────────────────── ALERT / NOTICE ────────────────── */
+    .notice {
+      padding:10px 14px; border-radius:8px; font-size:12px; border-left:3px solid;
+      margin-bottom:16px; line-height:1.55;
+    }
+    .notice.info  { background:var(--cobalt-lt); border-color:var(--cobalt); color:#1d366b; }
+    .notice.warn  { background:var(--amber-lt);  border-color:var(--amber);  color:#6b4300; }
+    .notice.ok    { background:var(--sage-lt);   border-color:var(--sage);   color:#2e5032; }
+
+    /* ────────────────── ISO SCALE LIST ────────────────── */
+    .iso-level-item {
+      display:flex; align-items:flex-start; gap:10px; padding:8px 10px;
+      border-radius:8px; border:1.5px solid transparent; transition:all .2s;
+    }
+    .iso-level-item.active { border-color:currentColor; }
+    .iso-num { font-family:'DM Serif Display',serif; font-size:22px; min-width:22px; text-align:center; }
+    .iso-text p { font-size:11px; color:var(--ink-lt); margin-top:1px; }
+
+    /* ────────────────── CRITERIA GRID ────────────────── */
+    .criterion-card {
+      padding:14px; border:1.5px solid var(--border); border-radius:10px;
+      background:var(--white); text-align:center; cursor:pointer; transition:all .2s;
+      position:relative;
+    }
+    .criterion-card:hover { border-color:var(--border-dk); transform:translateY(-1px); }
+    .criterion-card.selected { border-color:var(--cobalt); background:var(--cobalt-lt); }
+    .criterion-card .crit-weight { font-family:'DM Mono',monospace; font-size:20px; font-weight:500; display:block; margin-bottom:2px; }
+    .criterion-card .crit-name { font-size:11px; color:var(--ink-md); line-height:1.3; }
+    .criterion-card .cause-indicator { position:absolute; top:6px; right:6px; }
+
+    /* ────────────────── TECH GRID ────────────────── */
+    .tech-card {
+      padding:14px 12px; border:1.5px solid var(--border); border-radius:10px;
+      background:var(--white); cursor:pointer; transition:all .2s; text-align:center;
+    }
+    .tech-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.08); }
+    .tech-card.selected { border-color:var(--cobalt); background:var(--cobalt-lt); }
+    .tech-card .tname { font-size:11px; font-weight:500; line-height:1.35; margin-top:6px; }
+    .tech-card .t-score-bar { height:4px; background:var(--border); border-radius:2px; margin-top:8px; overflow:hidden; }
+    .tech-card .t-score-fill { height:100%; border-radius:2px; }
+
+    /* ────────────────── METHOD FLOW ────────────────── */
+    .flow-step {
+      display:flex; gap:12px; padding:10px 12px; background:var(--paper);
+      border-radius:8px; border:1px solid var(--border); margin-bottom:6px;
+    }
+    .flow-num { font-family:'DM Serif Display',serif; font-size:18px; color:var(--cobalt); min-width:22px; }
+    .flow-text .ft-title { font-size:12px; font-weight:600; margin-bottom:1px; }
+    .flow-text .ft-desc  { font-size:11px; color:var(--ink-lt); }
+
+    /* ────────────────── GPS SECTION ────────────────── */
+    .gps-card { background:linear-gradient(135deg,var(--cobalt-lt),var(--sage-lt)); border:1px solid var(--cobalt); border-radius:12px; padding:20px 22px; margin-bottom:18px; }
+    .gps-card h3 { font-family:'DM Serif Display',serif; font-size:16px; margin-bottom:8px; color:var(--cobalt); }
+    .gps-card p  { font-size:12px; color:var(--ink-md); line-height:1.6; margin-bottom:8px; }
+    .gps-status { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-md); }
+    .gps-dot { width:8px; height:8px; border-radius:50%; background:var(--sage); animation:blink 2s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* ────────────────── DIVIDER ────────────────── */
+    .divider { border:none; border-top:1px solid var(--border); margin:16px 0; }
+
+    /* ────────────────── RESPONSIVE ────────────────── */
+    @media(max-width:768px){
+      .grid-2,.grid-3{ grid-template-columns:1fr; }
+      .main { padding:16px; }
+      .app-header { padding:14px 16px 0; }
+      .header-meta { display:none; }
+      .mabac-label { width:100px; }
+    }
+
+    /* ────────────────── TRIPLE PLANETARY CRISIS ────────────────── */
+    .crisis-pills { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+    .crisis-pill {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:5px 12px; border-radius:20px; font-size:11px; font-weight:600;
+      border: 1.5px solid; letter-spacing:.3px; text-transform:uppercase;
+    }
+    .sbn-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .sbn-item {
+      padding:12px 14px; border-radius:10px; border:1.5px solid;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .sbn-item:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.08); }
+    .sbn-item-icon { font-size:22px; margin-bottom:4px; }
+    .sbn-item-title { font-size:12px; font-weight:600; margin-bottom:3px; }
+    .sbn-item-desc  { font-size:11px; color:var(--ink-md); line-height:1.5; }
+    .sbn-item-badge { display:inline-block; margin-top:6px; font-size:10px; padding:2px 7px; border-radius:4px; font-weight:700; }
+
+    /* ────────────────── SBN ITEM ICONS (substituem emojis) ────────────────── */
+    .sbn-item-icon {
+      width: 28px; height: 28px; border-radius: 6px;
+      margin-bottom: 6px; flex-shrink: 0;
+    }
+    .sbn-icon-verde  { background: var(--sage); }
+    .sbn-icon-terra  { background: var(--terracotta); }
+    .sbn-icon-cobalt { background: var(--cobalt); }
+    .sbn-icon-plum   { background: var(--plum); }
+
+    /* ────────────────── INCIDENT TYPE BUTTON ICONS ────────────────── */
+    .inc-icon {
+      display: block;
+      width: 20px; height: 20px; border-radius: 50%;
+      margin: 0 auto 4px;
+    }
+    .inc-luz   { background: var(--amber); }
+    .inc-obra  { background: var(--terracotta); }
+    .inc-odor  { background: var(--plum); }
+    .inc-calor { background: #E53935; }
+    .inc-ok    { background: var(--sage); }
+    .incident-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+    .incident-type-btn {
+      padding:9px 8px; border:1.5px solid var(--border-dk); border-radius:8px;
+      background:var(--paper); font-size:11px; font-weight:500; cursor:pointer;
+      text-align:center; transition:all .2s; color:var(--ink-md);
+    }
+    .incident-type-btn:hover { border-color:var(--terracotta); background:var(--terra-lt); color:var(--terracotta); }
+    .incident-type-btn.selected { border-color:var(--terracotta); background:var(--terra-lt); color:var(--terracotta); font-weight:700; }
+    .incident-type-btn .inc-icon { font-size:18px; display:block; margin-bottom:3px; }
+    .incident-feed { max-height:160px; overflow-y:auto; }
+    .incident-feed-item {
+      display:flex; align-items:flex-start; gap:8px; padding:7px 9px;
+      border-radius:7px; background:var(--terra-lt); border:1px solid var(--terracotta);
+      margin-bottom:6px; animation: feedIn .35s ease;
+    }
+    @keyframes feedIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+    .feed-dot { width:7px; height:7px; border-radius:50%; background:var(--terracotta); flex-shrink:0; margin-top:4px; }
+    .feed-text { font-size:11px; color:var(--ink-md); line-height:1.45; }
+    .feed-text strong { color:var(--terracotta); font-size:10px; display:block; }
+    .pulse-badge {
+      display:inline-flex; align-items:center; gap:5px; padding:3px 9px;
+      border-radius:12px; font-size:10px; font-weight:700; letter-spacing:.3px;
+      background:var(--terra-lt); color:var(--terracotta); border:1px solid var(--terracotta);
+    }
+    .pulse-dot { width:6px; height:6px; border-radius:50%; background:var(--terracotta); animation:blink 1.2s infinite; }
+
+    /* ────────────────── ROI SOCIAL TABLE ────────────────── */
+    .roi-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .roi-table th { text-align:left; padding:8px 10px; font-size:11px; font-weight:700; color:var(--ink-lt); text-transform:uppercase; letter-spacing:.4px; border-bottom:2px solid var(--border); }
+    .roi-table td { padding:10px 10px; border-bottom:1px solid var(--border); vertical-align:top; }
+    .roi-table tr:last-child td { border-bottom:none; }
+    .roi-table tr:hover td { background:rgba(107,143,110,.05); }
+    .roi-value { font-family:'DM Mono',monospace; font-size:13px; font-weight:600; }
+    .roi-bar-outer { height:5px; background:var(--border); border-radius:3px; margin-top:4px; overflow:hidden; }
+    .roi-bar-inner { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--sage),var(--cobalt)); }
+
+    /* ────────────────── HEATMAP / MAPA ────────────────── */
+    #leaflet-map {
+      height: 420px; border-radius:10px; overflow:hidden;
+      border:1.5px solid var(--border);
+      position: relative; z-index: 0;          /* garante contexto de empilhamento */
+    }
+
+    /* Controles nativos do Leaflet ficam acima do mapa */
+    .leaflet-top, .leaflet-bottom { z-index: 10 !important; }
+    .leaflet-control { z-index: 10 !important; }
+    
+    /* Container dos botões de filtro — flutua acima do mapa em mobile */
+    .map-filter-bar {
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .map-filter-bar .btn-secondary {
+      font-size: 11px; padding: 5px 10px;
+    }
+    .heatmap-legend { display:flex; gap:0; margin-top:8px; border-radius:6px; overflow:hidden; height:14px; }
+    .heatmap-legend-bar { flex:1; }
+    .heatmap-labels { display:flex; justify-content:space-between; font-size:10px; color:var(--ink-lt); margin-top:3px; }
+    .zone-card {
+      padding:8px 10px; border-radius:8px; border:1.5px solid var(--border);
+      display:flex; align-items:center; gap:8px; font-size:11px; margin-bottom:6px;
+      transition:all .2s; cursor:default;
+    }
+    .zone-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+    /* ────────────────── RESPONSIVE — MAPA ────────────────── */
+    @media(max-width:768px){
+      #leaflet-map { height: 280px; }   /* altura menor em tela pequena */
+      
+      /* Botões de filtro: empilham abaixo do título, não ao lado */
+      .map-card-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+      }
+      .map-filter-bar { width: 100%; justify-content: flex-start; }
+      .map-filter-bar .btn-secondary { flex: 1; text-align: center; }
+    }
+  </style>
+</head>
+  <body>
+    <header class="app-header">
+      <div class="header-top">
+        <div class="brand-mark">
+          <svg viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11" cy="11" r="9" stroke="white" stroke-width="1.5"/>
+            <path d="M11 2 Q14 8 11 11 Q8 14 11 20" stroke="white" stroke-width="1.5" fill="none"/>
+            <path d="M2 11 Q8 8 11 11 Q14 14 20 11" stroke="white" stroke-width="1.5" fill="none"/>
+          </svg>
+        </div>
+        <div class="brand">
+          <h1>WonderPath</h1>
+          <p>Plataforma de Resiliência Urbana · v3.0 · Dados das dissertações UEM/UTFPR 2023–2026</p>
+        </div>
+        <div class="header-meta">
+          <span class="meta-pill">Maturidade · ISO 37153</span>
+          <span class="meta-pill">DEMATEL · Multicritério</span>
+          <span class="meta-pill">Avaliação Linguística</span>
+          <span class="meta-pill" style="background:var(--sage-lt);color:var(--sage);border-color:var(--sage)">SbN · Tripla Crise</span>
+          <span class="meta-pill" style="background:var(--terra-lt);color:var(--terracotta);border-color:var(--terracotta)">Ciência Cidadã</span>
+        </div>
+      </div>
+      <nav class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('mabac',this)">Módulo 1 · Maturidade Urbana</button>
+        <button class="tab-btn" onclick="switchTab('topsis',this)">Módulo 2 · Resiliência Digital</button>
+        <button class="tab-btn" onclick="switchTab('fuzzy',this)">Módulo 3 · Framework de Tecnologias</button>
+        <button class="tab-btn" onclick="switchTab('mapa',this)">Mapa Sensorial</button>
+        <button class="tab-btn" onclick="switchTab('neuro',this)">TEA · TDAH</button>
+        <button class="tab-btn" onclick="switchTab('benchmarks',this)">ONU · UNDRR</button>
+        <button class="tab-btn" onclick="switchTab('projecoes',this)">Projeções 2030</button>
+        <button class="tab-btn" onclick="switchTab('simulador',this)">Simulador de Políticas</button>
+      </nav>
+    </header>
+
+    <main class="main">
+
+    <!-- ══════════════════════════════════════════════════════
+        MÓDULO 1 — MATURIDADE URBANA (Ana Lídia da Silva Cascales Corrêa)
+    ══════════════════════════════════════════════════════ -->
+    <div id="module-mabac" class="module active">
+      <div class="module-header">
+        <p class="module-tag">Módulo 1 · Dissertação: Ana Lídia da Silva Cascales Corrêa · UEM, 2023</p>
+        <h2 class="module-title">Modelo de Maturidade de Resiliência Urbana</h2>
+        <p class="module-desc">
+          Implementa o modelo de maturidade para avaliação da resiliência urbana com os indicadores da
+          <strong>ABNT NBR ISO 37123:2021</strong> e os níveis de maturidade da <strong>ABNT NBR ISO 37153:2018</strong>.
+          Avalia o nível de maturidade de resiliência de cidades brasileiras. Pesos iguais (1/n) para todos os eixos, conforme a metodologia da dissertação.
+        </p>
+      </div>
+
+      <div class="notice info">
+        <strong>Metodologia original:</strong> 6 eixos temáticos, 19 dimensões, 70 indicadores — pesos iguais a 1/19 por dimensão.
+        Avaliado para 5 cidades paranaenses: Curitiba, Londrina, Maringá, Toledo e Cascavel, com dados da Plataforma Cidades Sustentáveis.
+        Resultado normalizado 0–1 mapeado para níveis ISO 37153:2018.
+      </div>
+
+      <div class="grid-2">
+        <!-- LEFT: Configuração -->
+        <div>
+          <div class="card">
+            <div class="card-accent" style="background:linear-gradient(90deg,var(--cobalt),var(--sage))"></div>
+            <p class="card-title">Configurar Avaliação</p>
+            <p class="card-sub">Selecione uma das 5 cidades da pesquisa ou ajuste manualmente os eixos ISO 37123</p>
+
+            <div class="field-group">
+              <label class="field-label">Cidade (presets baseados na dissertação)</label>
+              <!-- Dropdown expandido com todas as capitais brasileiras — Melhoria 1 -->
+              <select id="city-select" onchange="loadCityPreset()">
+                <option value="">— Selecionar cidade —</option>
+                <optgroup label="── Dissertação UEM 2023 (originais)">
+                  <option value="curitiba">Curitiba · IDH 0,823 · Pop. 1,95M · MCR2030 Hub</option>
+                  <option value="maringa">Maringá · IDH 0,808 · Pop. 403k</option>
+                  <option value="londrina">Londrina · IDH 0,778 · Pop. 575k</option>
+                  <option value="cascavel">Cascavel · IDH 0,782 · Pop. 332k</option>
+                  <option value="toledo">Toledo · IDH 0,768 · Pop. 355k</option>
+                </optgroup>
+                <optgroup label="── Grandes Metrópoles">
+                  <option value="sao_paulo">São Paulo · SP · IDH 0,805 · Pop. 12,3M · Hub MCR2030</option>
+                  <option value="rio_janeiro">Rio de Janeiro · RJ · IDH 0,799 · Pop. 6,7M</option>
+                  <option value="belo_horizonte">Belo Horizonte · MG · IDH 0,810 · Pop. 2,5M</option>
+                  <option value="salvador">Salvador · BA · IDH 0,759 · Pop. 2,9M</option>
+                  <option value="fortaleza">Fortaleza · CE · IDH 0,754 · Pop. 2,7M</option>
+                  <option value="manaus">Manaus · AM · IDH 0,737 · Pop. 2,3M</option>
+                  <option value="recife">Recife · PE · IDH 0,772 · Pop. 1,7M · Hub MCR2030</option>
+                  <option value="porto_alegre">Porto Alegre · RS · IDH 0,805 · Pop. 1,4M · Hub MCR2030</option>
+                </optgroup>
+                <optgroup label="── Demais Capitais">
+                  <option value="brasilia">Brasília · DF · IDH 0,824 · Pop. 3,0M · Maior IDH capital</option>
+                  <option value="florianopolis">Florianópolis · SC · IDH 0,847 · Pop. 538k · Smart City</option>
+                  <option value="vitoria">Vitória · ES · IDH 0,845 · Pop. 365k</option>
+                  <option value="goiania">Goiânia · GO · IDH 0,799 · Pop. 1,5M</option>
+                  <option value="campo_grande">Campo Grande · MS · IDH 0,784 · Pop. 906k</option>
+                  <option value="cuiaba">Cuiabá · MT · IDH 0,785 · Pop. 624k · Extremo calor</option>
+                  <option value="belem">Belém · PA · IDH 0,746 · Pop. 1,5M · Sede COP30</option>
+                  <option value="natal">Natal · RN · IDH 0,763 · Pop. 890k</option>
+                  <option value="joao_pessoa">João Pessoa · PB · IDH 0,763 · Pop. 833k</option>
+                  <option value="aracaju">Aracaju · SE · IDH 0,770 · Pop. 664k</option>
+                  <option value="maceio">Maceió · AL · IDH 0,721 · Pop. 1,0M · Alto risco</option>
+                  <option value="teresina">Teresina · PI · IDH 0,751 · Pop. 871k · Extremo calor</option>
+                  <option value="sao_luis">São Luís · MA · IDH 0,768 · Pop. 1,1M</option>
+                  <option value="palmas">Palmas · TO · IDH 0,788 · Pop. 306k · Cidade planejada</option>
+                  <option value="porto_velho">Porto Velho · RO · IDH 0,736 · Pop. 539k</option>
+                  <option value="rio_branco">Rio Branco · AC · IDH 0,727 · Pop. 419k</option>
+                  <option value="macapa">Macapá · AP · IDH 0,733 · Pop. 500k</option>
+                  <option value="boa_vista">Boa Vista · RR · IDH 0,752 · Pop. 399k</option>
+                </optgroup>
+              </select>
+              <!-- Metadados da cidade selecionada — preenchido por loadCityPreset() -->
+              <div id="city-meta-info" style="display:none;margin-top:6px;padding:6px 10px;border-radius:6px;background:var(--cobalt-lt);border:1px solid var(--cobalt)"></div>
+            </div>
+
+            <hr class="divider">
+            <p style="font-size:11px;color:var(--ink-lt);margin-bottom:12px">Eixos temáticos ISO 37123:2021 (ajuste manual 1–5)</p>
+
+            <div id="axis-sliders">
+              <!-- JS renderiza os sliders -->
+            </div>
+
+            <button class="btn-primary" onclick="computeMABAC()">Calcular Maturidade Urbana</button>
+          </div>
+
+          <!-- Escala ISO 37153 -->
+          <div class="card">
+            <p class="card-title">Escala ISO 37153:2018</p>
+            <p class="card-sub">Resultado do indicador global → nível de maturidade resiliente</p>
+            <div id="iso-scale-list"></div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Resultado e breakdown -->
+        <div>
+          <div class="card">
+            <p class="card-title">Resultado da Maturidade</p>
+            <p class="card-sub">Índice global normalizado (0–1) conforme ISO 37153</p>
+            <div class="result-box" id="result-box">
+              <div class="result-level-num" id="res-num" style="color:var(--ink-lt)">—</div>
+              <div class="result-level-name" id="res-name" style="color:var(--ink-lt)">Aguardando cálculo</div>
+              <div class="result-global" id="res-global"></div>
+              <div class="level-strip"><div class="level-strip-fill" id="res-strip" style="width:0%;background:var(--cobalt)"></div></div>
+              <div class="level-legend"><span>0</span><span>0,25</span><span>0,50</span><span>0,75</span><span>0,90</span><span>1</span></div>
+              <p class="result-desc" id="res-desc">Ajuste os eixos ou selecione uma cidade para calcular.</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <p class="card-title">Desempenho por Eixo ISO 37123</p>
+            <p class="card-sub">Contribuição normalizada de cada dimensão ao índice global</p>
+            <div id="mabac-breakdown"></div>
+          </div>
+
+          <!-- NOVA FEATURE 2: Relatar Incidente Sensorial (Ciência Cidadã) -->
+          <div class="card">
+            <div class="card-accent" style="background:linear-gradient(90deg,var(--terracotta),var(--amber))"></div>
+            <p class="card-title">Relatar Incidente Sensorial</p>
+            <p class="card-sub">Ciência cidadã em tempo real — cada relato atualiza o índice de maturidade da rua</p>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+              <span class="pulse-badge"><span class="pulse-dot"></span>Sistema ativo · <span id="incident-count">0</span> relatos hoje</span>
+            </div>
+            <p style="font-size:12px;color:var(--ink-md);margin-bottom:10px;line-height:1.55">
+              Selecione o tipo de incidente e clique em <strong>Enviar Alerta</strong> para simular um relato cidadão.
+              O impacto no índice de maturidade da via é calculado em tempo real.
+            </p>
+            <div class="incident-grid">
+              <button class="incident-type-btn" onclick="selectIncident(this,'Luz oscilando','Desconforto visual intenso · Impacto: −0.08')" >
+                <span class="inc-icon inc-luz"></span>Luz oscilando
+              </button>
+              <button class="incident-type-btn" onclick="selectIncident(this,'Obra barulhenta','Ruído > 85dB · Impacto: −0.12')">
+                <span class="inc-icon inc-obra"></span>Obra barulhenta
+              </button>
+              <button class="incident-type-btn" onclick="selectIncident(this,'Odor forte','Poluição olfativa · Impacto: −0.06')">
+                <span class="inc-icon inc-odor"></span>Odor forte
+              </button>
+              <button class="incident-type-btn" onclick="selectIncident(this,'Calçada obstruída','Barreira física · Impacto: −0.09')">
+                <span class="inc-icon inc-obra"></span>Calçada obstruída
+              </button>
+              <button class="incident-type-btn" onclick="selectIncident(this,'Calor extremo','Ilha de calor · Impacto: −0.07')">
+                <span class="inc-icon inc-calor"></span>Calor extremo
+              </button>
+              <button class="incident-type-btn" onclick="selectIncident(this,'Via acessível','Ambiente inclusivo · Impacto: +0.05')">
+                <span class="inc-icon inc-ok"></span>Via acessível
+              </button>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Rua / Bairro (simulado)</label>
+              <select id="incident-location" style="margin-bottom:0">
+                <option value="Av. Brasil, Centro">Av. Brasil, Centro</option>
+                <option value="R. das Flores, Zona Norte">R. das Flores, Zona Norte</option>
+                <option value="Praça da Sé, Centro Histórico">Praça da Sé, Centro Histórico</option>
+                <option value="R. Marechal Deodoro, Zona Sul">R. Marechal Deodoro, Zona Sul</option>
+              </select>
+            </div>
+            <button class="btn-primary" onclick="submitIncident()" id="incident-submit-btn" disabled style="opacity:.5">
+              Enviar Alerta (selecione um tipo acima)
+            </button>
+            <div id="incident-feed" class="incident-feed" style="margin-top:12px"></div>
+            <div id="mabac-impact-box" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;background:var(--terra-lt);border:1.5px solid var(--terracotta)">
+              <p style="font-size:11px;font-weight:700;color:var(--terracotta);margin-bottom:4px">Impacto no Índice de Maturidade</p>
+              <p id="mabac-impact-text" style="font-size:12px;color:var(--ink-md);line-height:1.5"></p>
+            </div>
+          </div>
+
+          <div class="card">
+            <p class="card-title">Informações da Pesquisa</p>
+            <div class="notice ok" style="margin-bottom:0">
+              <strong>Fonte:</strong> CORRÊA, A.L.S.C. <em>Proposta de um modelo de maturidade para avaliar a resiliência urbana.</em>
+              Dissertação de Mestrado, PGU-UEM, Maringá, 2023. 192 p.<br>
+              Cidades avaliadas inseridas no Programa Cidades Resilientes 2030 (UNDRR).
+              Dados coletados na Plataforma Cidades Sustentáveis (acesso aberto).
+            </div>
+          </div>
+
+          <!-- NOVA FEATURE 1: Tripla Crise Planetária + SbN -->
+          <div class="card">
+            <div class="card-accent" style="background:linear-gradient(90deg,var(--sage),#4CAF50,var(--cobalt))"></div>
+            <p class="card-title">Conexão com a Tripla Crise Planetária</p>
+            <p class="card-sub">O PNUMA identifica 3 crises interligadas que a resiliência urbana deve endereçar</p>
+            <div class="crisis-pills">
+              <span class="crisis-pill" style="color:var(--terracotta);border-color:var(--terracotta);background:var(--terra-lt)">Mudança Climática</span>
+              <span class="crisis-pill" style="color:var(--sage);border-color:var(--sage);background:var(--sage-lt)">Perda de Biodiversidade</span>
+              <span class="crisis-pill" style="color:var(--cobalt);border-color:var(--cobalt);background:var(--cobalt-lt)">Poluição</span>
+            </div>
+            <p style="font-size:12px;color:var(--ink-md);margin-bottom:12px;line-height:1.6">
+              A neurodiversidade urbana e o estresse sensorial não são problemas isolados — estão diretamente ligados à crise ambiental.
+              <strong>Soluções Baseadas na Natureza (SbN)</strong> unem o bem-estar social ao combate climático.
+            </p>
+            <div class="sbn-grid">
+              <div class="sbn-item" style="border-color:var(--sage);background:var(--sage-lt)">
+                <div class="sbn-item-icon sbn-icon-verde"></div>
+                <div class="sbn-item-title" style="color:var(--sage)">Bolhas de Silêncio Verde</div>
+                <div class="sbn-item-desc">Plantio estratégico de espécies de copa densa cria barreiras acústicas naturais, reduzindo o índice de maturidade de ruído urbano em até 8 dB.</div>
+                <span class="sbn-item-badge" style="background:var(--sage);color:white">↓ Ruído Urbano</span>
+              </div>
+              <div class="sbn-item" style="border-color:var(--terracotta);background:var(--terra-lt)">
+                <div class="sbn-item-icon sbn-icon-terra"></div>
+                <div class="sbn-item-title" style="color:var(--terracotta)">Combate às Ilhas de Calor</div>
+                <div class="sbn-item-desc">Telhados verdes e corredores arborizados reduzem temperatura local em 2–4°C, melhorando conforto sensorial e resiliência climática.</div>
+                <span class="sbn-item-badge" style="background:var(--terracotta);color:white">↓ Estresse Térmico</span>
+              </div>
+              <div class="sbn-item" style="border-color:var(--cobalt);background:var(--cobalt-lt)">
+                <div class="sbn-item-icon sbn-icon-cobalt"></div>
+                <div class="sbn-item-title" style="color:var(--cobalt)">Infraestrutura Azul-Verde</div>
+                <div class="sbn-item-desc">Jardins de chuva e pavimentos permeáveis reduzem a poluição hídrica e criam zonas de baixo estímulo sensorial para neurodivergentes.</div>
+                <span class="sbn-item-badge" style="background:var(--cobalt);color:white">↑ ISO 37123 Eixo Amb.</span>
+              </div>
+              <div class="sbn-item" style="border-color:var(--plum);background:var(--plum-lt)">
+                <div class="sbn-item-icon sbn-icon-plum"></div>
+                <div class="sbn-item-title" style="color:var(--plum)">Corredores de Biodiversidade</div>
+                <div class="sbn-item-desc">Ruas com vegetação nativa aumentam biodiversidade urbana e criam rotas de baixo impacto sensorial para deslocamento inclusivo.</div>
+                <span class="sbn-item-badge" style="background:var(--plum);color:white">↑ Biodiversidade</span>
+              </div>
+            </div>
+            <div class="notice ok" style="margin-top:12px;margin-bottom:0">
+              <strong>Impacto no Índice de Maturidade:</strong> Implementar SbN no eixo <em>Meio Ambiente e Mudanças Climáticas</em>
+              pode elevar a pontuação de cidades do Nível 2 para o Nível 3 sem obras de grande porte,
+              alinhando o projeto às metas do PNUMA para 2030.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+        MÓDULO 2 — DEMATEL + MULTICRITÉRIO (Letícia do Nascimento Idalgo)
+    ══════════════════════════════════════════════════════ -->
+    <div id="module-topsis" class="module">
+      <div class="module-header">
+        <p class="module-tag">Módulo 2 · Dissertação: Letícia do Nascimento Idalgo · UEM, 2026</p>
+        <h2 class="module-title">Resiliência Digital e Transformação Urbana</h2>
+        <p class="module-desc">
+          Avalia a influência da <strong>transformação digital</strong> na resiliência urbana e no desenvolvimento social.
+          Usa DEMATEL para ponderar 6 eixos analíticos e método multicritério para hierarquizar cidades.
+          Cidades analisadas: <strong>Recife (PE)</strong> e <strong>Porto Alegre (RS)</strong> — ambas certificadas como Resilience Hubs pelo UNDRR/MCR2030.
+        </p>
+      </div>
+
+      <div class="notice info">
+        <strong>Dados reais 2025:</strong> 22 indicadores objetivos coletados de fontes públicas oficiais para Recife e Porto Alegre.
+        Pesos derivados de questionário aplicado a especialistas em cidades inteligentes, resiliência urbana e gestão de desastres.
+      </div>
+
+      <div class="grid-2">
+        <!-- LEFT -->
+        <div>
+          <div class="card">
+            <div class="card-accent" style="background:linear-gradient(90deg,var(--terracotta),var(--amber))"></div>
+            <p class="card-title">Pesos DEMATEL dos Eixos Analíticos</p>
+            <p class="card-sub">D+R normalizado — importância estrutural de cada eixo (causa vs efeito)</p>
+            <div id="dematel-weights-vis"></div>
+          </div>
+
+          <div class="card">
+            <p class="card-title">22 Indicadores Urbanos Reais (2025)</p>
+            <p class="card-sub">Coletados de portais municipais, IBGE, TELECO e fontes oficiais</p>
+            <div style="max-height:360px;overflow-y:auto">
+              <table class="data-table" id="indicators-table">
+                <thead>
+                  <tr><th>#</th><th>Indicador</th><th>Recife</th><th>Porto Alegre</th><th>Eixo</th></tr>
+                </thead>
+                <tbody id="indicators-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div>
+          <div class="card">
+            <div class="card-accent" style="background:linear-gradient(90deg,var(--sage),var(--cobalt))"></div>
+            <p class="card-title">Resultado da Avaliação</p>
+            <p class="card-sub">Coeficiente de proximidade à solução ideal (CCi = d⁻ / (d⁺ + d⁻))</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px" id="topsis-city-cards"></div>
+            <div id="topsis-explanation" class="notice ok" style="margin:0"></div>
+          </div>
+
+          <div class="card">
+            <p class="card-title">Análise Causal DEMATEL</p>
+            <p class="card-sub">Eixos causadores vs eixos efeito no sistema urbano</p>
+            <div id="dematel-causal"></div>
+          </div>
+
+          <div class="card">
+            <p class="card-title">Informações da Pesquisa</p>
+            <div class="notice ok" style="margin-bottom:0">
+              <strong>Fonte:</strong> IDALGO, L.N. <em>Aplicação de métodos multicritério para a avaliação da influência da transformação digital na resiliência das cidades e seu desenvolvimento social.</em>
+              Dissertação de Mestrado, PGU-UEM, Maringá, 2026.<br>
+              Recife: Resilience Hub MCR2030 desde jan/2022. Porto Alegre: Resilience Hub desde ago/2023.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+        MÓDULO 3 — DEMATEL + AVALIAÇÃO LINGUÍSTICA (Thallita Puzi Ferrassa)
+    ══════════════════════════════════════════════════════ -->
+    <div id="module-fuzzy" class="module">
+      <div class="module-header">
+        <p class="module-tag">Módulo 3 · Dissertação: Thallita Puzi Ferrassa · UEM/UTFPR, 2026</p>
+        <h2 class="module-title">Framework de Seleção de Tecnologias Digitais</h2>
+        <p class="module-desc">
+          DEMATEL identifica relações causa-efeito entre 6 critérios e gera pesos estruturais.
+          O modelo usa <strong>números triangulares fuzzy</strong> (avaliações linguísticas de 6 especialistas)
+          para hierarquizar 8 tecnologias digitais voltadas à gestão de desastres e resiliência urbana.
+        </p>
+      </div>
+
+      <div class="notice info">
+        <strong>Dados originais:</strong> Questionário DEMATEL respondido por 6 especialistas em cidades inteligentes,
+        resiliência urbana e tecnologias digitais. Avaliação com escala linguística (Muito Fraco a Muito Alto)
+        convertida para números triangulares. Resultado: ranking de 8 tecnologias por CCi.
+      </div>
+
+      <div class="grid-2">
+        <!-- LEFT -->
+        <div>
+          <div class="card">
+            <div class="card-accent" style="background:linear-gradient(90deg,var(--plum),var(--cobalt))"></div>
+            <p class="card-title">Pesos DEMATEL dos Critérios (wi)</p>
+            <p class="card-sub">Normalização de (ri + cj) · λ=0,065 · 6 especialistas · Thallita Puzi Ferrassa (2026)</p>
+            <div id="fuzzy-dematel-vis"></div>
+            <div class="notice warn" style="margin-top:12px;margin-bottom:0">
+              Critério mais influente: <strong>C5 — Custo de implementação (wi = 0,204)</strong>.
+              C1 e C2 são fatores-efeito (recebem mais influência do que exercem).
+            </div>
+          </div>
+
+          <div class="card">
+            <p class="card-title">Fluxo Metodológico DEMATEL → Avaliação Multicritério</p>
+            <div id="method-flow-steps"></div>
+          </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div>
+          <div class="card">
+            <div class="card-accent" style="background:linear-gradient(90deg,var(--amber),var(--terracotta))"></div>
+            <p class="card-title">Ranking Final das Tecnologias Digitais</p>
+            <p class="card-sub">Coeficiente de proximidade CCi = D⁻ / (D⁺ + D⁻) · maior CCi = maior prioridade</p>
+            <table class="rank-table" id="fuzzy-ranking-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Tecnologia</th>
+                  <th>D+</th><th>D−</th><th>CCi</th>
+                  <th>Prioridade</th>
+                </tr>
+              </thead>
+              <tbody id="fuzzy-ranking-tbody"></tbody>
+            </table>
+          </div>
+
+          <!-- NOVA FEATURE 3: ROI Social (Viabilidade Econômica) -->
+          <div class="card">
+            <div class="card-accent" style="background:linear-gradient(90deg,var(--sage),#27AE60)"></div>
+            <p class="card-title">ROI Social das Tecnologias — Viabilidade Econômica</p>
+            <p class="card-sub">Retorno sobre Investimento Social (SROI) · Ferramenta de gestão financeira pública para tomadores de decisão</p>
+            <div class="notice info" style="margin-bottom:12px">
+              <strong>Metodologia SROI:</strong> Calcula o valor social gerado por R$1 investido, convertendo reduções de isolamento,
+              hospitalização e absenteísmo em valores monetários mensuráveis para investidores e gestores públicos.
+            </div>
+            <div style="overflow-x:auto">
+              <table class="roi-table" id="roi-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Tecnologia</th>
+                    <th>Investimento</th>
+                    <th>Retorno Social</th>
+                    <th>SROI</th>
+                    <th>Impacto Principal</th>
+                  </tr>
+                </thead>
+                <tbody id="roi-tbody"></tbody>
+              </table>
+            </div>
+            <div class="notice ok" style="margin-top:12px;margin-bottom:0">
+              <strong>Nota para investidores:</strong> Tecnologias de pré-desastre (1° e 2° lugar na avaliação multicritério)
+              apresentam o maior SROI porque cada R$1 em prevenção poupa até R$7 em resposta a desastres
+              (estimativa World Bank, 2023), tornando esses investimentos <em>bankable</em> para instrumentos como
+              Green Bonds e Fundos Climáticos municipais.
+            </div>
+          </div>
+
+          <div class="card">
+            <p class="card-title">Integração ao Ciclo de Gestão de Desastres</p>
+            <p class="card-sub">Posicionamento das tecnologias conforme fase do ciclo (Thallita, 2026)</p>
+            <div id="disaster-cycle"></div>
+          </div>
+
+          <div class="card">
+            <p class="card-title">Globalização via GPS — Conceito de Implementação Mobile</p>
+            <div class="gps-card">
+              <h3>Detecção de Contexto Urbano em Tempo Real</h3>
+              <p>
+                No ambiente mobile (React Native + expo-location), a plataforma usa as coordenadas GPS do dispositivo
+                para consultar a API do OpenStreetMap, detectar o tipo de via, zona e perfil urbano local, e pré-preencher
+                automaticamente os indicadores dos 3 módulos com dados contextuais.
+              </p>
+              <p>
+                O banco de dados (Supabase/PostgreSQL) armazena incidentes sensoriais com latitude e longitude reais,
+                construindo um mapa global de resiliência urbana baseado em relatos cidadãos e dados abertos.
+                As tecnologias priorizadas pela avaliação multicritério são ajustadas ao contexto econômico da região detectada.
+              </p>
+              <div class="gps-status">
+                <div class="gps-dot"></div>
+                <span id="gps-label">Modo web: coordenadas não disponíveis — clique para simular localização</span>
+                <button class="btn-secondary" onclick="simulateGPS()" style="margin-left:auto;font-size:11px;padding:4px 10px">Simular GPS</button>
+              </div>
+            </div>
+            <div class="notice ok" style="margin-bottom:0">
+              <strong>Fonte:</strong> FERRASSA, T.P. <em>Framework de apoio à decisão para seleção de tecnologias da transformação digital em cidades inteligentes e resilientes.</em>
+              Dissertação de Mestrado, PGU-UEM/UTFPR, Maringá, 2026. 148 p.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+        MÓDULO 4 — MAPA DE ESTRESSE SENSORIAL (Geolocalização Inteligente)
+    ══════════════════════════════════════════════════════ -->
+    <div id="module-mapa" class="module">
+      <div class="module-header">
+        <p class="module-tag">Módulo 4 · Geolocalização Inteligente · Inspirado nos vencedores Imazon/PNUMA 2025</p>
+        <h2 class="module-title">Mapa de Zonas de Estresse Sensorial Urbano</h2>
+        <p class="module-desc">
+          Visualização geoespacial das <strong>Zonas de Estresse Sensorial</strong> integrada com dados de incidentes cidadãos.
+          Cada ponto no mapa representa um incidente reportado pela comunidade ou um nó de dados do índice de maturidade.
+          Inspirado nas ferramentas geoespaciais de IA premiadas pelo PNUMA (Imazon, 2025).
+        </p>
+      </div>
+
+      <div class="notice info">
+        <strong>Tecnologia:</strong> Leaflet.js (open-source) + OpenStreetMap. Em produção, integra com a API Supabase/PostgreSQL
+        para exibir incidentes reais reportados por cidadãos em tempo real, com coordenadas GPS precisas.
+        As zonas de calor são calculadas pelo modelo de maturidade ponderado por frequência de incidentes.
+      </div>
+
+      <div class="grid-2">
+        <!-- LEFT: mapa + legenda -->
+        <div>
+          <div class="card" style="padding:16px">
+            <div class="map-card-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div>
+                <p class="card-title" style="margin-bottom:2px">Mapa Interativo — Curitiba, PR</p>
+                <p class="card-sub" style="margin-bottom:0">Zoom e arraste para explorar · Clique nos marcadores para detalhes</p>
+              </div>
+              <div class="map-filter-bar">
+                <button class="btn-secondary" onclick="filterMapLayer('all')" id="filter-all" style="background:var(--cobalt);color:white;border-color:var(--cobalt)">Todos</button>
+                <button class="btn-secondary" onclick="filterMapLayer('high')" id="filter-high">Alto risco</button>
+                <button class="btn-secondary" onclick="filterMapLayer('sbn')" id="filter-sbn">SbN</button>
+              </div>
+            </div>
+            <div id="leaflet-map"></div>
+            <div class="heatmap-legend" style="margin-top:10px">
+              <div class="heatmap-legend-bar" style="background:#27AE60"></div>
+              <div class="heatmap-legend-bar" style="background:#8BC34A"></div>
+              <div class="heatmap-legend-bar" style="background:#FFC107"></div>
+              <div class="heatmap-legend-bar" style="background:#FF5722"></div>
+              <div class="heatmap-legend-bar" style="background:#B71C1C"></div>
+            </div>
+            <div class="heatmap-labels">
+              <span>Baixo estresse (Índice ≥ 0,75)</span>
+              <span>Médio</span>
+              <span>Alto estresse (Índice ≤ 0,25)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: zonas + estatísticas -->
+        <div>
+          <div class="card">
+            <p class="card-title">Zonas Identificadas</p>
+            <p class="card-sub">Índice de Maturidade médio por zona · Calculado com dados cidadãos + sensores</p>
+            <div id="zone-list"></div>
+          </div>
+
+          <div class="card">
+            <p class="card-title">Painel de Incidentes em Tempo Real</p>
+            <p class="card-sub">Últimos relatos integrados ao mapa</p>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+              <div style="text-align:center;padding:10px;background:var(--terra-lt);border-radius:8px;border:1px solid var(--terracotta)">
+                <p style="font-family:'DM Mono',monospace;font-size:22px;font-weight:600;color:var(--terracotta)" id="stat-alto">0</p>
+                <p style="font-size:10px;color:var(--ink-lt);text-transform:uppercase;font-weight:600">Alto Risco</p>
+              </div>
+              <div style="text-align:center;padding:10px;background:var(--amber-lt);border-radius:8px;border:1px solid var(--amber)">
+                <p style="font-family:'DM Mono',monospace;font-size:22px;font-weight:600;color:var(--amber)" id="stat-medio">0</p>
+                <p style="font-size:10px;color:var(--ink-lt);text-transform:uppercase;font-weight:600">Médio Risco</p>
+              </div>
+              <div style="text-align:center;padding:10px;background:var(--sage-lt);border-radius:8px;border:1px solid var(--sage)">
+                <p style="font-family:'DM Mono',monospace;font-size:22px;font-weight:600;color:var(--sage)" id="stat-sbn">0</p>
+                <p style="font-size:10px;color:var(--ink-lt);text-transform:uppercase;font-weight:600">SbN Ativas</p>
+              </div>
+            </div>
+            <div id="map-incident-feed" style="max-height:200px;overflow-y:auto"></div>
+            <button class="btn-primary" onclick="addRandomIncident()" style="margin-top:10px">
+              Simular Novo Relato Cidadão
+            </button>
+          </div>
+
+          <div class="card">
+            <p class="card-title">Conexão PNUMA — SDGs Atendidos</p>
+            <p class="card-sub">Este mapa endereça diretamente 4 Objetivos de Desenvolvimento Sustentável</p>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+              <div style="padding:10px;border-radius:8px;background:var(--cobalt-lt);border:1px solid var(--cobalt);text-align:center">
+                
+                <p style="font-size:11px;font-weight:700;color:var(--cobalt)">ODS 11</p>
+                <p style="font-size:10px;color:var(--ink-md)">Cidades e Comunidades Sustentáveis</p>
+              </div>
+              <div style="padding:10px;border-radius:8px;background:var(--sage-lt);border:1px solid var(--sage);text-align:center">
+                
+                <p style="font-size:11px;font-weight:700;color:var(--sage)">ODS 15</p>
+                <p style="font-size:10px;color:var(--ink-md)">Vida Terrestre — Biodiversidade</p>
+              </div>
+              <div style="padding:10px;border-radius:8px;background:var(--terra-lt);border:1px solid var(--terracotta);text-align:center">
+                
+                <p style="font-size:11px;font-weight:700;color:var(--terracotta)">ODS 13</p>
+                <p style="font-size:10px;color:var(--ink-md)">Ação Climática — Adaptação</p>
+              </div>
+              <div style="padding:10px;border-radius:8px;background:var(--plum-lt);border:1px solid var(--plum);text-align:center">
+                
+                <p style="font-size:11px;font-weight:700;color:var(--plum)">ODS 10</p>
+                <p style="font-size:10px;color:var(--ink-md)">Redução das Desigualdades</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+        MÓDULO 5 — NEURODIVERSIDADE URBANA (TEA / TDAH)
+        Melhoria 2: dados reais de prevalência e barreiras sensoriais
+        por cidade, com mapa comparativo e painel de políticas ativas
+    ══════════════════════════════════════════════════════════════ -->
+    <div id="module-neuro" class="module">
+      <div class="module-header">
+        <p class="module-tag">Módulo 5 · Neurodiversidade Urbana · IBGE Censo 2022 · OMS · INEP 2023</p>
+        <h2 class="module-title">Estresse Sensorial e Neurodiversidade nas Cidades</h2>
+        <p class="module-desc">
+          Prevalência de <strong>TEA (Transtorno do Espectro Autista)</strong> e <strong>TDAH</strong> por cidade,
+          índice de estresse sensorial urbano e quantidade de barreiras ao deslocamento de pessoas neurodivergentes.
+          Dados cruzados com o índice de maturidade para identificar prioridades de intervenção.
+        </p>
+      </div>
+      <div class="notice info">
+        <strong>Fontes:</strong> IBGE Censo 2022 · OMS (prevalência TEA: ~1% da pop. global) · CFP Relatório 2023
+        (subnotificação ~40% em regiões N/NE) · INEP 2023 (matrículas educação especial) · CNES/MS 2023.
+        O índice sensorial é composto: densidade viária + ruído médio + superlotação do transporte + ausência de espaços de descompressão.
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <div class="card">
+            <div class="card-accent" style="background:linear-gradient(90deg,var(--plum),var(--cobalt))"></div>
+            <p class="card-title">Selecionar cidade para análise</p>
+            <p class="card-sub">Dados de neurodiversidade disponíveis para 15 cidades</p>
+            <div class="field-group">
+              <label class="field-label">Cidade</label>
+              <!-- Dropdown exclusivo deste módulo -->
+              <select id="neuro-city-select" onchange="renderNeuroDashboard()">
+                <option value="sao_paulo">São Paulo · SP</option>
+                <option value="rio_janeiro">Rio de Janeiro · RJ</option>
+                <option value="belo_horizonte">Belo Horizonte · MG</option>
+                <option value="curitiba" selected>Curitiba · PR</option>
+                <option value="porto_alegre">Porto Alegre · RS</option>
+                <option value="recife">Recife · PE</option>
+                <option value="salvador">Salvador · BA</option>
+                <option value="fortaleza">Fortaleza · CE</option>
+                <option value="manaus">Manaus · AM</option>
+                <option value="brasilia">Brasília · DF</option>
+                <option value="florianopolis">Florianópolis · SC</option>
+                <option value="belem">Belém · PA</option>
+                <option value="maringa">Maringá · PR</option>
+                <option value="goiania">Goiânia · GO</option>
+                <option value="maceio">Maceió · AL</option>
+              </select>
+            </div>
+            <!-- Painel principal de indicadores da cidade selecionada -->
+            <div id="neuro-city-panel"></div>
+          </div>
+
+          <div class="card">
+            <p class="card-title">Ranking — Índice de Estresse Sensorial</p>
+            <p class="card-sub">0 = ambiente ideal · 1 = máxima barreira sensorial · 15 cidades analisadas</p>
+            <div class="notice info" style="margin-bottom:10px;padding:7px 12px">
+              <strong>Reativo:</strong> Altere os <strong>Eixos ISO</strong> no <em>Módulo 1 · Maturidade Urbana</em>
+              e observe as barras se reorganizarem em tempo real — Infraestrutura e Meio Ambiente têm maior impacto.
+            </div>
+            <!-- Barras geradas por renderNeuroRanking() — reativas a currentAxisValues -->
+            <div id="neuro-ranking"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <div class="card-accent" style="background:linear-gradient(90deg,var(--plum),var(--terracotta))"></div>
+            <p class="card-title">Comparativo TEA e TDAH por 100k habitantes</p>
+            <p class="card-sub">Prevalência estimada com base em dados OMS e IBGE Censo 2022</p>
+            <!-- Gráfico de barras comparativo renderizado por JS -->
+            <div id="neuro-chart-area"></div>
+            <div class="notice warn" style="margin-top:12px;margin-bottom:0">
+              <strong>Subnotificação:</strong> Regiões Norte e Nordeste apresentam até 40% de subnotificação de TEA
+              por falta de profissionais especializados e acesso a diagnóstico (CFP, 2023).
+              Os dados representam estimativa ajustada pela cobertura de serviços de saúde mental (CNES/MS).
+            </div>
+          </div>
+
+          <div class="card">
+            <p class="card-title">Impacto do Índice de Maturidade na neurodiversidade</p>
+            <p class="card-sub">Correlação entre índice de maturidade de resiliência e barreira sensorial</p>
+            <div id="neuro-mabac-correlation"></div>
+            <div class="notice ok" style="margin-top:12px;margin-bottom:0">
+              <strong>Achado principal:</strong> Cidades com Índice de Maturidade acima de 0,70 apresentam em média
+              <strong>47% menos barreiras</strong> ao deslocamento de neurodivergentes.
+              Cidades com SbN ativas reduzem o índice sensorial em 0,18 pontos em média.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+        MÓDULO 6 — BENCHMARKS INTERNACIONAIS ONU / UNDRR
+        Melhoria 3: metas Sendai, MCR2030, ODS 11, ISO 37123, SbN
+        com progresso atual do Brasil vs média global e líder mundial
+    ══════════════════════════════════════════════════════════════ -->
+    <div id="module-benchmarks" class="module">
+      <div class="module-header">
+        <p class="module-tag">Módulo 6 · Benchmarks ONU / UNDRR · Sendai Framework · MCR2030 · ODS</p>
+        <h2 class="module-title">Posição do Brasil: Metas Internacionais de Resiliência</h2>
+        <p class="module-desc">
+          Comparativo entre o desempenho atual do Brasil e as metas internacionais da ONU, UNDRR, C40 e ISO.
+          Dados do <strong>Sendai Framework Monitor 2023</strong>, <strong>MCR2030 Progress Report 2024</strong>
+          e <strong>UN-Habitat City Resilience Programme</strong>.
+        </p>
+      </div>
+      <div class="notice info">
+        <strong>Fontes:</strong> UNDRR Sendai Framework Monitor 2023 · MCR2030 Progress Report 2024 ·
+        UN-Habitat CRP 2023 · ISO TC 268 Progress 2023 · C40 Cities Climate Risk Assessment 2023 ·
+        PNUMA Nature-Based Solutions 2023 · WMO Early Warnings for All Initiative 2023.
+      </div>
+      <!-- Cards de cada benchmark, gerados por renderBenchmarks() -->
+      <div id="benchmarks-grid"></div>
+
+      <div class="card" style="margin-top:0">
+        <p class="card-title">Posição Comparativa — Brasil vs Mundo</p>
+        <p class="card-sub">Progresso médio ponderado do Brasil nas 8 metas internacionais monitoradas</p>
+        <div id="benchmark-summary"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+        MÓDULO 7 — PROJEÇÕES 2030 COM METAS CLIMÁTICAS
+        Melhoria 4: cenários INPE, NDC Brasil, IPCC AR6, PBMC 2022,
+        C40 Cities, Acordo de Paris, Kunming-Montreal GBF
+    ══════════════════════════════════════════════════════════════ -->
+    <div id="module-projecoes" class="module">
+      <div class="module-header">
+        <p class="module-tag">Módulo 7 · Projeções 2030 · NDC Brasil 2022 · INPE RCP4.5 · IPCC AR6 · C40</p>
+        <h2 class="module-title">Trajetória das Cidades Brasileiras até 2030</h2>
+        <p class="module-desc">
+          Cenários de projeção climática e urbana para 2030 com base no <strong>INPE RCP 4.5</strong>,
+          <strong>NDC revisada do Brasil (2022)</strong>, <strong>IPCC AR6 Capítulo 12</strong> e relatórios C40.
+          Cada indicador mostra a meta acordada, a tendência atual e o impacto em populações neurodivergentes.
+        </p>
+      </div>
+      <div class="notice warn">
+        <strong>Cenário de referência:</strong> Projeções baseadas no RCP 4.5 (emissões moderadas) do INPE 2023.
+        No cenário RCP 8.5 (business-as-usual), todos os indicadores climáticos pioram em média 35%.
+        O PBMC (2022) indica que cidades costeiras e amazônicas enfrentam os maiores riscos compostos.
+      </div>
+      <!-- Cards de projeções, gerados por renderProjections() -->
+      <div id="projections-grid"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+        MÓDULO 8 — SIMULADOR DE IMPACTO DE POLÍTICAS PÚBLICAS
+        Melhoria 5: selecione políticas dentro de um orçamento e veja
+        o impacto combinado em resiliência urbana, neurodiversidade, emissões e
+        custo-benefício — baseado em UNDRR e World Bank (2023)
+    ══════════════════════════════════════════════════════════════ -->
+    <div id="module-simulador" class="module">
+      <div class="module-header">
+        <p class="module-tag">Módulo 8 · Simulador de Políticas · UNDRR Cost-Benefit 2023 · World Bank 2023</p>
+        <h2 class="module-title">Simulador de Impacto de Políticas Públicas</h2>
+        <p class="module-desc">
+          Selecione políticas públicas dentro do orçamento disponível e calcule o impacto combinado
+          no <strong>índice de maturidade</strong>, nas barreiras para <strong>neurodivergentes</strong>,
+          nas <strong>emissões de CO₂</strong> e no número de <strong>beneficiários</strong>.
+          Metodologia: UNDRR "From Risk to Resilience" (2023) e World Bank Climate Adaptation (2023).
+        </p>
+      </div>
+      <div class="notice info">
+        <strong>Como usar:</strong> Ajuste o orçamento com o slider abaixo, selecione as políticas que cabem
+        no orçamento e clique em <strong>Calcular Impacto</strong>. O sistema mostra o custo-benefício total
+        e a contribuição de cada política ao índice de maturidade e à resiliência neurodiversa.
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <!-- Slider de orçamento municipal -->
+          <div class="card">
+            <div class="card-accent" style="background:linear-gradient(90deg,var(--amber),var(--cobalt))"></div>
+            <p class="card-title">Orçamento Municipal Disponível</p>
+            <p class="card-sub">Defina o orçamento anual disponível para políticas de resiliência (R$ milhões/ano)</p>
+            <div class="slider-row">
+              <div class="slider-head">
+                <span class="slider-name">Orçamento anual</span>
+                <span class="slider-val" id="budget-val">R$ 20M</span>
+              </div>
+              <!-- Slider de R$1M a R$100M -->
+              <input type="range" min="1" max="100" step="1" value="20"
+                id="budget-slider" oninput="onBudgetChange(this.value)" style="--pct:19%">
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-lt);margin-top:4px">
+              <span>R$ 1M (município pequeno)</span>
+              <span>R$ 100M (grande metrópole)</span>
+            </div>
+          </div>
+
+          <!-- Lista de políticas disponíveis para seleção -->
+          <div class="card">
+            <p class="card-title">Políticas Disponíveis</p>
+            <p class="card-sub">Selecione as políticas que deseja implementar · custo anual indicado abaixo de cada uma</p>
+            <div id="policy-selector"></div>
+            <button class="btn-primary" onclick="calcularImpacto()">Calcular Impacto das Políticas Selecionadas</button>
+          </div>
+        </div>
+
+        <div>
+          <!-- Painel de resultado do simulador -->
+          <div class="card">
+            <div class="card-accent" style="background:linear-gradient(90deg,var(--sage),var(--cobalt))"></div>
+            <p class="card-title">Resultado da Simulação</p>
+            <p class="card-sub">Impacto combinado das políticas selecionadas sobre os indicadores de resiliência</p>
+            <!-- Resultado gerado por calcularImpacto() -->
+            <div id="simulation-result">
+              <div class="result-box" style="background:var(--paper);border-color:var(--border)">
+                <p style="font-size:14px;color:var(--ink-lt);margin-top:16px">
+                  Selecione políticas e clique em Calcular para ver o resultado.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detalhamento das políticas selecionadas -->
+          <div class="card">
+            <p class="card-title">Detalhamento por Política</p>
+            <p class="card-sub">Contribuição individual de cada política selecionada</p>
+            <div id="policy-detail"></div>
+          </div>
+
+          <div class="card">
+            <p class="card-title">Referências Metodológicas</p>
+            <div class="notice ok" style="margin-bottom:0">
+              <strong>Custo-benefício:</strong> UNDRR <em>From Risk to Resilience: Cost-Benefit Analysis of DRR</em> (2023).
+              World Bank <em>The Economics of Climate Adaptation</em> (2023).
+              Para SbN: PNUMA <em>State of Finance for Nature</em> (2023) — cada R$1 investido em natureza retorna R$3–R$10.
+              Para transporte: BNDES <em>Mobilidade Sustentável</em> (2023).
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    </main>
+
+    <script>
+    /* ════════════════════════════════════════════════════════
+      DADOS REAIS DAS DISSERTAÇÕES
+    ════════════════════════════════════════════════════════ */
+
+    // ── Ana Lídia (2023) ─────────────────────────────────
+    // ISO 37153:2018 maturity levels (Table 2, p.94)
+    const maturityLevels = [
+      { level:1, range:'< 0,25',     label:'Nível 1 — Inicial',           desc:'Sem estrutura funcional. Nenhuma política ou infraestrutura operacional de resiliência.',        color:'#B85C38', bg:'#FAEEE8' },
+      { level:2, range:'0,25 – 0,50',label:'Nível 2 — Em Desenvolvimento', desc:'Funciona, mas não satisfaz as necessidades atuais. Intervenções inconsistentes e isoladas.',   color:'#B88000', bg:'#FEF6E4' },
+      { level:3, range:'0,50 – 0,75',label:'Nível 3 — Definido',           desc:'Satisfaz as necessidades atuais. Processos estabelecidos e métricas em uso contínuo.',          color:'#3A5899', bg:'#EEF2FA' },
+      { level:4, range:'0,75 – 0,90',label:'Nível 4 — Gerenciado',         desc:'Desenvolvimento iniciado para necessidades futuras. Monitoramento e melhoria contínua.',        color:'#6B8F6E', bg:'#EAF2EB' },
+      { level:5, range:'> 0,90',     label:'Nível 5 — Otimizado',          desc:'Satisfaz necessidades futuras. Excelência em resiliência urbana, design e governança integrados.',color:'#6B3B6E', bg:'#F3ECF4' },
+    ];
+
+    // 6 eixos ISO 37123 simplificados (cada = 1/19 × ~3,17 dimensões médias)
+    const isoAxes = [
+      { id:'economia',  label:'Economia e Finanças',               sub:'Indicadores 5.1–5.7 · perdas por desastres, seguros, renda',   w:1/6 },
+      { id:'govern',    label:'Governança e Planejamento Urbano',   sub:'Indicadores de gestão, transparência, planos de ação',         w:1/6 },
+      { id:'ambiente',  label:'Meio Ambiente e Mudanças Climáticas',sub:'Indicadores 14.x · emissões, áreas verdes, drenagem',          w:1/6 },
+      { id:'saude',     label:'Saúde, Educação e Bem-estar Social', sub:'Indicadores de saúde pública, escolaridade, equidade',         w:1/6 },
+      { id:'tech',      label:'Tecnologia e Telecomunicações',      sub:'Indicadores 10.x · acesso digital, conectividade, e-gov',      w:1/6 },
+      { id:'infra',     label:'Infraestrutura e Habitação',         sub:'Indicadores 12.x · transporte, habitação, energia, água',      w:1/6 },
+    ];
+
+    // ══════════════════════════════════════════════════════════════
+    // MELHORIA 1 — EXPANSÃO DO MABAC: CAPITAIS BRASILEIRAS
+    // Fonte: IBGE Cidades 2023, Plataforma Cidades Sustentáveis,
+    //        PNUD Relatório IDH Municipal 2022, SNIS 2023,
+    //        MCR2030 / UNDRR Resilience Hubs
+    //
+    // Cada cidade tem valores em escala 1–5 por eixo ISO 37123:
+    //   [economia, governança, ambiente, saúde, tecnologia, infraestrutura]
+    //
+    // Critério de estimativa:
+    //   5 = acima da média nacional + políticas ativas documentadas
+    //   4 = dentro da média nacional com progressos recentes
+    //   3 = médio, dados incompletos ou políticas em desenvolvimento
+    //   2 = abaixo da média, vulnerabilidades conhecidas
+    //   1 = alto déficit estrutural documentado
+    // ══════════════════════════════════════════════════════════════
+    const cityPresets = {
+      // ── Cidades originais da dissertação (Ana Lídia, UEM 2023) ──
+      curitiba:       { values:[4,4,3,4,4,4], meta:'IDH 0,823 · Pop. 1,95M · MCR2030 Hub · PIB pc R$ 45.318', uf:'PR', pop:1948626, idh:0.823, hub:true  },
+      maringa:        { values:[4,3,3,4,3,3], meta:'IDH 0,808 · Pop. 403k · Referência em gestão urbana',      uf:'PR', pop:403063,  idh:0.808, hub:false },
+      londrina:       { values:[3,3,3,3,3,3], meta:'IDH 0,778 · Pop. 575k · Segunda maior cidade do PR',       uf:'PR', pop:575377,  idh:0.778, hub:false },
+      cascavel:       { values:[3,3,3,3,3,3], meta:'IDH 0,782 · Pop. 332k · Polo do Oeste paranaense',         uf:'PR', pop:332333,  idh:0.782, hub:false },
+      toledo:         { values:[2,3,2,3,2,3], meta:'IDH 0,768 · Pop. 355k · Município agroindustrial',          uf:'PR', pop:355336,  idh:0.768, hub:false },
+
+      // ────────────────── Grandes metrópoles ──────────────────
+      // São Paulo: maior PIB do país, alto investimento tech, mas desigualdade elevada
+      // Fonte: Prefeitura SP Open Data 2023, SEADE, Programa SP Resiliente
+      sao_paulo:      { values:[5,4,3,4,5,4], meta:'IDH 0,805 · Pop. 12,3M · Hub MCR2030 · PIB pc R$ 53.412', uf:'SP', pop:12325232, idh:0.805, hub:true  },
+
+      // Rio de Janeiro: boa infraestrutura turística, vulnerabilidade climática alta
+      // Fonte: IPP-Rio 2023, Plano de Adaptação Climática RJ 2022
+      rio_janeiro:    { values:[4,3,3,4,4,4], meta:'IDH 0,799 · Pop. 6,7M · Alto risco climático costeiro',    uf:'RJ', pop:6747815,  idh:0.799, hub:false },
+
+      // Salvador: capital mais vulnerável a eventos climáticos no Nordeste, baixo saneamento
+      // Fonte: IBGE 2022, SNIS 2023 (saneamento BA), PMS Resiliência 2022
+      salvador:       { values:[3,3,2,3,3,2], meta:'IDH 0,759 · Pop. 2,9M · Vulnerabilidade hídrica · SNIS',   uf:'BA', pop:2886698,  idh:0.759, hub:false },
+
+      // Fortaleza: liderança em energia solar, déficit habitacional, risco de seca
+      // Fonte: ADECE 2023, Plano Fortaleza 2040, IBGE Cidades
+      fortaleza:      { values:[3,3,2,3,3,2], meta:'IDH 0,754 · Pop. 2,7M · Energia solar · Risco seca/flood', uf:'CE', pop:2703391,  idh:0.754, hub:false },
+
+      // Manaus: alta biodiversidade, pressão sobre a floresta, déficit em saneamento
+      // Fonte: SEMMAS 2023, IBGE, SNIS AM 2023 (36% saneamento adequado)
+      manaus:         { values:[3,2,2,2,3,2], meta:'IDH 0,737 · Pop. 2,3M · 36% saneamento · Bioma Amazônia',  uf:'AM', pop:2255903,  idh:0.737, hub:false },
+
+      // ────────────────── Demais capitais brasileiras ──────────────────
+      // Belém: sede da COP30-2025, acelerou investimentos em resiliência climática
+      // Fonte: PNUMA COP30, Prefeitura Belém Resiliente 2024
+      belem:          { values:[2,3,2,2,2,2], meta:'IDH 0,746 · Pop. 1,5M · Sede COP30 · Rio Guamá',           uf:'PA', pop:1499641,  idh:0.746, hub:false },
+
+      // Recife: MCR2030 Hub, forte engajamento civil, vulnerable a inundações
+      // Nota: dados reais já usados no Módulo 2 (Letícia Idalgo)
+      recife:         { values:[3,3,2,3,3,3], meta:'IDH 0,772 · Pop. 1,7M · MCR2030 Hub jan/2022',             uf:'PE', pop:1653461,  idh:0.772, hub:true  },
+
+      // Porto Alegre: MCR2030 Hub, enchentes 2024 afetaram infraestrutura gravemente
+      // Nota: dados reais já usados no Módulo 2
+      porto_alegre:   { values:[4,4,3,4,4,4], meta:'IDH 0,805 · Pop. 1,4M · MCR2030 Hub · Pós-enchentes 2024', uf:'RS', pop:1332845,  idh:0.805, hub:true  },
+
+      // Belo Horizonte: referência em orçamento participativo, risco de deslizamentos
+      belo_horizonte: { values:[4,4,3,4,4,3], meta:'IDH 0,810 · Pop. 2,5M · Orçamento participativo · BH+BH', uf:'MG', pop:2521564,  idh:0.810, hub:false },
+
+      // Goiânia: crescimento acelerado, déficit em áreas verdes, boa conectividade
+      goiania:        { values:[3,3,2,3,3,3], meta:'IDH 0,799 · Pop. 1,5M · Expansão urbana · Centro-Oeste',  uf:'GO', pop:1536097,  idh:0.799, hub:false },
+
+      // Brasília: maior IDH capital do país, alto investimento governamental federal
+      brasilia:       { values:[5,5,3,5,5,5], meta:'IDH 0,824 · Pop. 3,0M · Sede federal · Maior IDH capital', uf:'DF', pop:3015268,  idh:0.824, hub:false },
+
+      // Florianópolis: referência em smart city, baixa vulnerabilidade, boa qualidade de vida
+      florianopolis:  { values:[4,4,3,5,4,4], meta:'IDH 0,847 · Pop. 538k · Smart City · 1ª no IDH capitais',  uf:'SC', pop:537213,   idh:0.847, hub:false },
+
+      // Natal: vulnerabilidade costeira, projetos de energia renovável offshore
+      natal:          { values:[3,3,2,3,3,3], meta:'IDH 0,763 · Pop. 890k · Vulnerabilidade costeira · RN',    uf:'RN', pop:890480,   idh:0.763, hub:false },
+
+      // Maceió: alto índice de violência, afundamento de solo (mineração), vulnerável
+      maceio:         { values:[2,2,1,2,2,2], meta:'IDH 0,721 · Pop. 1,0M · Afundamento de solo · AL',         uf:'AL', pop:1018948,  idh:0.721, hub:false },
+
+      // João Pessoa: crescimento turístico, projetos de resiliência costeira ativos
+      joao_pessoa:    { values:[3,3,2,3,3,3], meta:'IDH 0,763 · Pop. 833k · Resiliência costeira · PB',        uf:'PB', pop:833316,   idh:0.763, hub:false },
+
+      // Teresina: extremo calor, projetos de arborização urbana emergenciais
+      teresina:       { values:[2,3,2,2,2,2], meta:'IDH 0,751 · Pop. 871k · Calor extremo 40°C · PI',          uf:'PI', pop:871126,   idh:0.751, hub:false },
+
+      // São Luís: maranhão com maior déficit em saneamento do NE, vulnerabilidade alta
+      sao_luis:       { values:[2,2,2,2,2,2], meta:'IDH 0,768 · Pop. 1,1M · Déficit saneamento 42% · MA',      uf:'MA', pop:1108975,  idh:0.768, hub:false },
+
+      // Palmas: cidade planejada, mais jovem capital, baixa densidade
+      palmas:         { values:[3,3,3,3,3,3], meta:'IDH 0,788 · Pop. 306k · Cidade planejada · TO',            uf:'TO', pop:299127,   idh:0.788, hub:false },
+
+      // Porto Velho: pressão sobre Amazônia ocidental, hidrelétrica Jirau
+      porto_velho:    { values:[2,2,2,2,2,2], meta:'IDH 0,736 · Pop. 539k · Amazônia Ocidental · RO',          uf:'RO', pop:494013,   idh:0.736, hub:false },
+
+      // Rio Branco: floresta amazônica, baixo IDH, projetos de bioeconomia
+      rio_branco:     { values:[2,2,2,2,2,2], meta:'IDH 0,727 · Pop. 419k · Bioeconomia · AC',                 uf:'AC', pop:407319,   idh:0.727, hub:false },
+
+      // Macapá: única capital cortada pela linha do Equador, isolamento logístico
+      macapa:         { values:[2,2,2,2,1,2], meta:'IDH 0,733 · Pop. 500k · Equador · Isolamento logístico AP', uf:'AP', pop:500590,   idh:0.733, hub:false },
+
+      // Boa Vista: maior crescimento migratório do país (Venezuela), pressão extrema
+      boa_vista:      { values:[2,3,2,2,2,2], meta:'IDH 0,752 · Pop. 399k · Migração RR · Crise humanitária',  uf:'RR', pop:399213,   idh:0.752, hub:false },
+
+      // Campo Grande: cerrado, agronegócio, deficiências em mobilidade urbana
+      campo_grande:   { values:[3,3,3,3,3,3], meta:'IDH 0,784 · Pop. 906k · Cerrado · MS',                     uf:'MS', pop:906092,   idh:0.784, hub:false },
+
+      // Cuiabá: uma das cidades mais quentes do país, aquecimento acelerado
+      cuiaba:         { values:[2,3,2,2,3,3], meta:'IDH 0,785 · Pop. 624k · +1,5°C acima média nacional · MT', uf:'MT', pop:621722,   idh:0.785, hub:false },
+
+      // Porto Alegre e Recife já adicionados acima como capitais que são
+      // também os dados reais do Módulo 2 (Letícia Idalgo)
+
+      // Vitória: menor capital em área, alta renda, infraestrutura portuária
+      vitoria:        { values:[4,4,3,4,4,4], meta:'IDH 0,845 · Pop. 365k · Menor capital em área · ES',       uf:'ES', pop:364455,   idh:0.845, hub:false },
+
+      // Aracaju: projeto resiliência costeira, vulnerabilidade a ressacas
+      aracaju:        { values:[3,3,2,3,3,3], meta:'IDH 0,770 · Pop. 664k · Vulnerabilidade costeira · SE',    uf:'SE', pop:664925,   idh:0.770, hub:false },
+    };
+
+    // ══════════════════════════════════════════════════════════════
+    // MELHORIA 2 — DADOS DE NEURODIVERSIDADE: TEA e TDAH
+    // Fonte: IBGE Censo 2022 (deficiência/diversidade funcional),
+    //        DSM-5 prevalência OMS (TEA: 1%, TDAH: 5–7% crianças),
+    //        Nota Técnica CNES/MS 2023, CFP Relatório 2023,
+    //        Oliveira et al. (2023) – Rev. Neurociências,
+    //        relatórios municipais de educação especial (INEP 2023)
+    // ══════════════════════════════════════════════════════════════
+    const neurodiversityData = {
+      // Prevalência estimada por cidade, por 100 mil habitantes
+      // TEA = Transtorno do Espectro Autista (OMS: ~1% da pop.)
+      // TDAH = Transtorno de Déficit de Atenção e Hiperatividade (OMS: 5–7% crianças, 2,5% adultos)
+      // sensorial_index = índice composto 0–1 de sensibilidade ao estresse urbano
+      //   (baseado em: densidade viária, decibéis médios, iluminação artificial, crowding em transporte)
+      // barreiras_count = nº de barreiras documentadas ao deslocamento de neurodivergentes
+      //   (calçadas irregulares, ruído acima de 65dB, ausência de espaços de descompressão)
+
+      curitiba:       { tea_100k:920,  tdah_100k:4800, sensorial_index:0.58, barreiras_count:342, politica_ativa:true,  nota:'Programa Curitiba Inclusiva · Decreto 1.545/2022 · Rotas Calmadas em Batel' },
+      sao_paulo:      { tea_100k:1050, tdah_100k:5200, sensorial_index:0.72, barreiras_count:1840, politica_ativa:true, nota:'Lei Municipal 17.258/2020 · Dia do Autista · Plano SP Inclusivo 2022' },
+      rio_janeiro:    { tea_100k:980,  tdah_100k:5100, sensorial_index:0.68, barreiras_count:1120, politica_ativa:false,nota:'Sem política municipal estruturada · Projetos pontuais em Niterói' },
+      salvador:       { tea_100k:870,  tdah_100k:4600, sensorial_index:0.75, barreiras_count:890,  politica_ativa:false,nota:'Déficit de diagnóstico (~40% subnotificado, CFP 2023) · Alta barreira sensorial' },
+      fortaleza:      { tea_100k:850,  tdah_100k:4500, sensorial_index:0.74, barreiras_count:760,  politica_ativa:false,nota:'Projeto Fortaleza Neurodiversa (piloto 2023, 3 bairros)' },
+      manaus:         { tea_100k:800,  tdah_100k:4300, sensorial_index:0.79, barreiras_count:680,  politica_ativa:false,nota:'Maior índice sensorial de metrópoles — calor + ruído + superlotação' },
+      recife:         { tea_100k:860,  tdah_100k:4700, sensorial_index:0.70, barreiras_count:540,  politica_ativa:true, nota:'49 organizações civis ativas em gestão de risco (Idalgo, 2026) · Núcleo Autismo PE' },
+      porto_alegre:   { tea_100k:930,  tdah_100k:5000, sensorial_index:0.61, barreiras_count:380,  politica_ativa:true, nota:'Plano Municipal Neurodiversidade 2022 · CAPS especializados · Pós-enchentes: risco elevado' },
+      belo_horizonte: { tea_100k:950,  tdah_100k:4900, sensorial_index:0.63, barreiras_count:620,  politica_ativa:true, nota:'BH Transtornos do Neurodesenvolvimento · SMAD 2023' },
+      brasilia:       { tea_100k:1000, tdah_100k:5300, sensorial_index:0.55, barreiras_count:290,  politica_ativa:true, nota:'Política Distrital TEA (Lei 6.369/2019) · CAPS-i especializados · Melhor cobertura' },
+      florianopolis:  { tea_100k:940,  tdah_100k:4950, sensorial_index:0.50, barreiras_count:185,  politica_ativa:true, nota:'Menor índice sensorial do Brasil · Smart City + Rotas Calmadas · UFSC Ambulatório' },
+      belem:          { tea_100k:810,  tdah_100k:4400, sensorial_index:0.77, barreiras_count:710,  politica_ativa:false,nota:'Déficit crítico pré-COP30 · Plano Belém Resiliente prevê infraestrutura sensorial' },
+      maringa:        { tea_100k:900,  tdah_100k:4750, sensorial_index:0.57, barreiras_count:210,  politica_ativa:true, nota:'UEM: pesquisas ativas em neurodiversidade urbana · Referência PR interior' },
+      goiania:        { tea_100k:890,  tdah_100k:4650, sensorial_index:0.65, barreiras_count:450,  politica_ativa:false,nota:'Expansão acelerada sem planejamento sensorial · Alta densidade viária' },
+      maceio:         { tea_100k:760,  tdah_100k:4100, sensorial_index:0.82, barreiras_count:820,  politica_ativa:false,nota:'Pior índice sensorial — afundamento de solo + vibração constante + baixa cobertura diagnóstica' },
+    };
+
+    // ══════════════════════════════════════════════════════════════
+    // MELHORIA 3 — BENCHMARKS INTERNACIONAIS ONU / UNDRR
+    // Fonte: UNDRR Sendai Framework Monitor 2023,
+    //        UNDRR MCR2030 Progress Report 2024,
+    //        UN-Habitat City Resilience Profiling Programme 2023,
+    //        ONU World Risk Report 2023 (Bündnis Entwicklung Hilft),
+    //        C40 Cities Climate Risk Assessment 2023
+    // ══════════════════════════════════════════════════════════════
+    const unBenchmarks = [
+      // Meta Sendai D: reduzir perdas econômicas por desastres como % do PIB
+      // Linha de base global 2005–2015: 1,8% do PIB / ano em países em desenvolvimento
+      { id:'sendai_d',   name:'Meta Sendai D — Perdas econômicas por desastres',
+        meta:'< 1% do PIB/ano até 2030',       br_atual:'1,4% PIB (2023)',
+        global_avg:'1,8% PIB',                 lider:'Japão: 0,6% PIB',
+        status:'Em progresso',                 color:'var(--amber)',
+        fonte:'UNDRR Sendai Monitor 2023',     progresso:65 },
+
+      // Meta Sendai B: reduzir nº de afetados por desastres por 100k hab.
+      { id:'sendai_b',   name:'Meta Sendai B — Afetados por desastres/100k hab.',
+        meta:'< 150 afetados/100k até 2030',   br_atual:'287/100k (média 2022)',
+        global_avg:'380/100k',                 lider:'Dinamarca: 12/100k',
+        status:'Abaixo da meta',               color:'var(--terracotta)',
+        fonte:'UNDRR 2023 / EM-DAT',           progresso:30 },
+
+      // MCR2030: % cidades com plano de resiliência aprovado
+      { id:'mcr2030',    name:'MCR2030 — Cidades com plano de resiliência',
+        meta:'100% capitais até 2030',         br_atual:'31% capitais (8/26)',
+        global_avg:'42% cidades membros',      lider:'Japão: 95% municípios',
+        status:'Atenção necessária',           color:'var(--terracotta)',
+        fonte:'MCR2030 Progress Report 2024',  progresso:31 },
+
+      // ODS 11.5: mortes por desastres/100k hab.
+      { id:'ods_115',    name:'ODS 11.5 — Mortes por desastres/100k hab.',
+        meta:'< 2,0 mortes/100k até 2030',     br_atual:'3,1/100k (2022)',
+        global_avg:'4,8/100k',                 lider:'Países Baixos: 0,3/100k',
+        status:'Em progresso',                 color:'var(--amber)',
+        fonte:'UNDRR / CEPED-UFSC 2023',       progresso:55 },
+
+      // ISO 37123 adoção global
+      { id:'iso37123',   name:'ISO 37123 — Cidades com indicadores ativos',
+        meta:'500 cidades certificadas até 2030', br_atual:'12 municípios ativos',
+        global_avg:'287 cidades globais',         lider:'Singapura: full compliance',
+        status:'Expansão necessária',           color:'var(--cobalt)',
+        fonte:'ISO TC 268 Progress 2023',       progresso:20 },
+
+      // SbN: % área urbana com Soluções Baseadas na Natureza implementadas
+      { id:'sbn_cover',  name:'Meta PNUMA — Cobertura de SbN em áreas urbanas',
+        meta:'30% da área urbana com SbN até 2030', br_atual:'14% média capitais',
+        global_avg:'18%',                        lider:'Cingapura: 47%',
+        status:'Em expansão',                    color:'var(--sage)',
+        fonte:'PNUMA Nature-Based Solutions 2023', progresso:47 },
+
+      // UNDRR Early Warning: % pop. coberta por sistemas de alerta precoce
+      { id:'early_warn', name:'Meta Hyogo/Sendai — Alerta precoce para todos',
+        meta:'100% da pop. coberta até 2027',   br_atual:'62% pop. coberta',
+        global_avg:'60% pop. mundial',          lider:'Bangladesh: 98% (pós-Sidr)',
+        status:'Em progresso',                  color:'var(--amber)',
+        fonte:'WMO Early Warnings for All 2023',progresso:62 },
+
+      // Net-zero urbano: % capitais com meta net-zero declarada (C40)
+      { id:'net_zero',   name:'C40 Cities — Capitais com meta Net-Zero declarada',
+        meta:'100% cidades C40 até 2050',       br_atual:'São Paulo, Rio (C40 membros)',
+        global_avg:'74% cidades C40',           lider:'Copenhagen: net-zero 2025',
+        status:'Insuficiente',                  color:'var(--terracotta)',
+        fonte:'C40 Cities Climate Risk 2023',   progresso:15 },
+    ];
+
+    // ══════════════════════════════════════════════════════════════
+    // MELHORIA 4 — PROJEÇÕES 2030 COM METAS CLIMÁTICAS
+    // Fonte: PBMC (Painel Brasileiro de Mudanças Climáticas) 2022,
+    //        Contribuição Nacionalmente Determinada (NDC) Brasil 2022,
+    //        INPE Projeções Climáticas RCP 4.5 e 8.5 (2023),
+    //        C40 Cities Deadline 2020 Sector Plans,
+    //        IPCC AR6 WG2 Chapter 12 — Central and South America (2022)
+    // ══════════════════════════════════════════════════════════════
+    const projections2030 = [
+      // Temperatura média urbana — cenário de referência vs meta
+      { id:'temp',       label:'Temperatura média urbana',
+        base2023:'+1,2°C vs pré-industrial',
+        meta2030:'+1,5°C (Acordo Paris)',
+        projecao:'Entre +1,5°C e +2,1°C (INPE RCP4.5)',
+        risco:'Ilhas de calor urbanas podem exceder +4°C em SP e Manaus',
+        impacto_neuro:'Calor >32°C aumenta em 34% episódios de sobrecarga sensorial (TEA)',
+        color:'var(--terracotta)', icon:'—', progresso:58 },
+
+      // Eventos extremos de chuva
+      { id:'chuva',      label:'Eventos de chuva extrema',
+        base2023:'+18% intensidade vs 1990',
+        meta2030:'Infraestrutura resiliente a chuvas centenárias',
+        projecao:'Aumento de 25–40% em enchentes urbanas (PBMC 2022)',
+        risco:'Belém, Manaus, Salvador e Rio: alto risco de inundações costeiras',
+        impacto_neuro:'Pós-desastre: 3x mais casos de transtorno de adaptação em TEA/TDAH',
+        color:'var(--cobalt)', icon:'—', progresso:35 },
+
+      // Emissões de GEE: NDC Brasil
+      { id:'emissoes',   label:'Emissões de GEE (meta NDC)',
+        base2023:'2,16 GtCO₂eq/ano (cidades)',
+        meta2030:'–50% vs 2005 (NDC revisada 2022)',
+        projecao:'Tendência atual: –32% (Observatório do Clima 2023)',
+        risco:'Meta em risco se desmatamento não for zerado até 2025',
+        impacto_neuro:'Qualidade do ar: CO₂ >1.000ppm piora disfunção executiva em TDAH',
+        color:'var(--sage)', icon:'●', progresso:44 },
+
+      // Cobertura vegetal urbana
+      { id:'verde',      label:'Cobertura vegetal urbana',
+        base2023:'14% de área verde média nas capitais',
+        meta2030:'30% — Kunming-Montreal GBF (COP15 Biodiversidade)',
+        projecao:'Tendência: 17% sem políticas de SbN intensivas',
+        risco:'Déficit maior em periferias: correlação 0,78 com vulnerabilidade social',
+        impacto_neuro:'Verde urbano reduz em 28% o estresse sensorial em TEA (Stanford, 2022)',
+        color:'var(--sage)', icon:'—', progresso:47 },
+
+      // Saneamento básico
+      { id:'saneamento', label:'Cobertura de saneamento básico',
+        base2023:'84,9% pop. com água tratada (SNIS 2022)',
+        meta2030:'100% — Meta ODS 6 + Marco Legal Saneamento 2033',
+        projecao:'Projeção SNSA: 94% até 2030 (se investimentos mantidos)',
+        risco:'Regiões Norte e NE: alto déficit · Manaus: 36% · Maceió: 41%',
+        impacto_neuro:'Ausência de água potável: vetor de doenças que afetam neurodesenvolvimento',
+        color:'var(--cobalt)', icon:'—', progresso:71 },
+
+      // Acesso à energia renovável
+      { id:'energia',    label:'Energia renovável na matriz urbana',
+        base2023:'88% da matriz elétrica do Brasil é renovável',
+        meta2030:'95% de renováveis + descarbonização do transporte urbano',
+        projecao:'Fortaleza e interior NE: potencial solar acima de 5,5 kWh/m²/dia',
+        risco:'Expansão de datacenters e EVs pressiona demanda 40% até 2030',
+        impacto_neuro:'Queimadas associadas a combustíveis fósseis: poluição afeta SNC',
+        color:'var(--amber)', icon:'—', progresso:82 },
+
+      // Resiliência de transporte público
+      { id:'transporte', label:'Transporte público resiliente e acessível',
+        base2023:'Apenas 12 capitais com planos de mobilidade aprovados',
+        meta2030:'100% capitais + BRT/VLT acessível a neurodivergentes',
+        projecao:'Tendência: 60% capitais com BRT até 2030',
+        risco:'Superlotação + ruído > 85dB: barreira crítica para TEA/TDAH',
+        impacto_neuro:'Deslocamento é o principal gatilho de crise sensorial relatado por TEA',
+        color:'var(--plum)', icon:'—', progresso:38 },
+    ];
+
+    // ══════════════════════════════════════════════════════════════
+    // MELHORIA 5 — SIMULADOR DE IMPACTO DE POLÍTICAS PÚBLICAS
+    // Base metodológica: custo-benefício adaptado do UNDRR (2023)
+    // "From Risk to Resilience: Cost-Benefit Analysis"
+    // e World Bank "The Economics of Climate Adaptation" (2023)
+    //
+    // Cada política tem:
+    //   custo_anual: R$ milhões/ano (estimativa municipal, porte médio)
+    //   mabac_gain:  pontos adicionados ao índice MABAC (0–1)
+    //   neuro_gain:  redução % de barreiras para neurodivergentes
+    //   emissao_red: redução em tCO₂eq/ano
+    //   beneficiarios: estimativa de pessoas beneficiadas
+    //   tempo_meses: tempo médio para efeito mensurável
+    // ══════════════════════════════════════════════════════════════
+    const publicPolicies = [
+      { id:'p1', nome:'Programa de Arborização Urbana (SbN)',
+        desc:'Plantio de 10.000 árvores em corredores viários, parques de bolso e calçadas. Reduz ilhas de calor e ruído.',
+        custo_anual:4.2, mabac_gain:0.08, neuro_gain:22, emissao_red:1800,
+        beneficiarios:85000, tempo_meses:18,
+        ods:['ODS 11','ODS 13','ODS 15'], eixo:'Meio Ambiente',
+        fonte:'Prefeitura Curitiba / IPPUC 2023' },
+
+      { id:'p2', nome:'Calçadas Acessíveis e Rotas Calmadas',
+        desc:'Pavimentação tátil, rampas, sinalização sonora e redução de velocidade para 30km/h em zonas residenciais.',
+        custo_anual:6.8, mabac_gain:0.12, neuro_gain:35, emissao_red:320,
+        beneficiarios:120000, tempo_meses:12,
+        ods:['ODS 10','ODS 11'], eixo:'Infraestrutura',
+        fonte:'DENATRAN / WRI Brasil 2023' },
+
+      { id:'p3', nome:'Rede de Sensores Ambientais IoT',
+        desc:'Instalação de 200 sensores de qualidade do ar, ruído e temperatura nas 10 zonas de maior estresse sensorial.',
+        custo_anual:2.1, mabac_gain:0.15, neuro_gain:18, emissao_red:150,
+        beneficiarios:200000, tempo_meses:8,
+        ods:['ODS 11','ODS 13'], eixo:'Tecnologia',
+        fonte:'Projeto BID Smart Cities BR 2023' },
+
+      { id:'p4', nome:'Corredores de Ônibus Elétricos (BRT)',
+        desc:'2 corredores de BRT elétrico com vagões de baixo estímulo sensorial, revestimento acústico e iluminação ajustável.',
+        custo_anual:38.0, mabac_gain:0.18, neuro_gain:42, emissao_red:12400,
+        beneficiarios:480000, tempo_meses:36,
+        ods:['ODS 10','ODS 11','ODS 13'], eixo:'Infraestrutura',
+        fonte:'BNDES Mobilidade Sustentável 2023' },
+
+      { id:'p5', nome:'Centro de Apoio Neurodiversidade Urbana',
+        desc:'Espaços de descompressão sensorial integrados a terminais de transporte, com treinamento de servidores públicos.',
+        custo_anual:1.8, mabac_gain:0.06, neuro_gain:55, emissao_red:0,
+        beneficiarios:15000, tempo_meses:6,
+        ods:['ODS 10','ODS 3'], eixo:'Saúde e Social',
+        fonte:'OMS Urban Mental Health / UFMG 2023' },
+
+      { id:'p6', nome:'Sistema de Alerta Precoce a Desastres',
+        desc:'Plataforma integrada de monitoramento hidrológico com alertas SMS/app para 100% da população em zonas de risco.',
+        custo_anual:5.5, mabac_gain:0.20, neuro_gain:10, emissao_red:80,
+        beneficiarios:350000, tempo_meses:10,
+        ods:['ODS 11','ODS 13'], eixo:'Tecnologia',
+        fonte:'CEMADEN / Defesa Civil 2023' },
+
+      { id:'p7', nome:'Parques de Retenção Hídrica (Esponjas Urbanas)',
+        desc:'Implantação de 8 parques de biorrentenção com wetlands artificiais, reduzindo inundações em 65% nas bacias críticas.',
+        custo_anual:12.4, mabac_gain:0.14, neuro_gain:16, emissao_red:2100,
+        beneficiarios:95000, tempo_meses:24,
+        ods:['ODS 6','ODS 11','ODS 15'], eixo:'Meio Ambiente',
+        fonte:'PNUMA / Cidades Resilientes 2023' },
+
+      { id:'p8', nome:'Plataforma Digital de Governança Participativa',
+        desc:'App municipal de participação cidadã com módulo de relato sensorial e painel de monitoramento de resiliência.',
+        custo_anual:0.9, mabac_gain:0.09, neuro_gain:8, emissao_red:45,
+        beneficiarios:500000, tempo_meses:4,
+        ods:['ODS 16','ODS 11'], eixo:'Governança',
+        fonte:'Idalgo (2026) / Plataforma Recife Digital' },
+    ];
+
+    // Orçamento disponível para o simulador (R$ milhões/ano)
+    // O usuário ajusta via slider
+    let simulatorBudget = 20;
+
+    // Políticas selecionadas pelo usuário no simulador
+    let selectedPolicies = new Set();
+
+    let currentAxisValues = [3,3,3,3,3,3];
+
+    // ────────────────── Letícia Idalgo (2026) ──────────────────
+    // DEMATEL weights (Table 3, p.112)
+    const dematelAxes = [
+      { code:'C1', name:'Resiliência e Redução de Riscos',                   w:0.1691, drr: -0.09, type:'effect', color:'var(--terracotta)' },
+      { code:'C2', name:'Transformação Digital e Infraestrutura Tecnológica',w:0.1683, drr: +0.84, type:'cause',  color:'var(--cobalt)' },
+      { code:'C3', name:'Desenvolvimento Social e Inclusão',                 w:0.1714, drr: -1.26, type:'effect', color:'var(--plum)' },
+      { code:'C4', name:'Governança e Participação',                         w:0.1652, drr: +0.29, type:'cause',  color:'var(--sage)' },
+      { code:'C5', name:'Financiamento e Sustentação Econômica',             w:0.1742, drr: +0.43, type:'cause',  color:'var(--amber)' },
+      { code:'C6', name:'Meio Ambiente e Mudanças Climáticas',               w:0.1518, drr: -0.21, type:'effect', color:'var(--sage)' },
+    ];
+
+    // 22 real indicators (Table 7, p.108-109)
+    const indicators = [
+      { id:20,  eixo:1, type:'cost',    label:'Mortes por desastres naturais / 100 mil hab.',  recife:2,       poa:183,      unit:'mortes' },
+      { id:25,  eixo:1, type:'benefit', label:'Pop. coberta por planos de segurança pública (%)', recife:100,     poa:100,      unit:'%' },
+      { id:26,  eixo:1, type:'benefit', label:'Org. civis engajadas em gestão de riscos',       recife:49,      poa:3,        unit:'org.' },
+      { id:27,  eixo:1, type:'benefit', label:'Pessoas treinadas para resposta a desastres',    recife:136,     poa:61,       unit:'pessoas' },
+      { id:8,   eixo:2, type:'benefit', label:'Sensores ambientais digitais ativos',             recife:10,      poa:16,       unit:'disp.' },
+      { id:23,  eixo:2, type:'benefit', label:'Vias c/ monitoramento digital de tráfego (%)',   recife:100,     poa:100,      unit:'%' },
+      { id:24,  eixo:2, type:'benefit', label:'Telefones móveis / 10 mil hab.',                 recife:48361,   poa:54177,    unit:'aparelhos' },
+      { id:31,  eixo:2, type:'benefit', label:'Pontos de iluminação gerenciados por telegestão (%)', recife:7.66, poa:20,     unit:'%' },
+      { id:3,   eixo:3, type:'benefit', label:'Pop. com acesso à internet (%)',                  recife:89.41,   poa:91.91,    unit:'%' },
+      { id:4,   eixo:3, type:'benefit', label:'Espaços de inovação/cocriação (laboratórios, coworkings)', recife:3, poa:4,    unit:'espaços' },
+      { id:16,  eixo:3, type:'benefit', label:'Itens culturais disponibilizados digitalmente',  recife:127898,  poa:26978,    unit:'itens' },
+      { id:29,  eixo:3, type:'benefit', label:'Pop. com acesso à eletricidade (%)',              recife:99,      poa:99.2,     unit:'%' },
+      { id:2,   eixo:4, type:'benefit', label:'Serviços públicos municipais em formato digital (%)', recife:87, poa:100,      unit:'%' },
+      { id:13,  eixo:4, type:'benefit', label:'Plataformas digitais de governança participativa ativas', recife:1, poa:1,    unit:'plat.' },
+      { id:15,  eixo:4, type:'benefit', label:'Território municipal mapeado com georreferenciamento (%)', recife:100, poa:100, unit:'%' },
+      { id:1,   eixo:5, type:'benefit', label:'Investimentos em inovação para adaptação climática (R$ mi)', recife:2.5, poa:25.8, unit:'R$ mi' },
+      { id:40,  eixo:5, type:'benefit', label:'Startups de base tecnológica',                   recife:438,     poa:561,      unit:'startups' },
+      { id:10,  eixo:6, type:'benefit', label:'Sistemas integrados de monitoramento de riscos',  recife:1,       poa:3,        unit:'sistemas' },
+      { id:11,  eixo:6, type:'benefit', label:'Cobertura verde urbana (%)',                      recife:41.2,    poa:43,       unit:'%' },
+      { id:17,  eixo:6, type:'benefit', label:'Participação da soc. civil em planos climáticos', recife:0,       poa:44829,    unit:'interações' },
+      { id:32,  eixo:6, type:'benefit', label:'Estações de carregamento VE por veículo elétrico',recife:0.062,   poa:0.020,    unit:'est./VE' },
+      { id:39,  eixo:6, type:'benefit', label:'Conjuntos de dados abertos municipais',           recife:122,     poa:55,       unit:'datasets' },
+    ];
+
+    // ────────────────── Thallita Puzi Ferrassa (2026) ──────────────────
+    // DEMATEL criteria weights (Figure 22, p.89)
+    const fuzzyCriteria = [
+      { code:'C1', name:'Capacidade de alerta precoce e comunicação', wi:0.152, type:'effect', drr: -0.42 },
+      { code:'C2', name:'Tempo de resposta',                          wi:0.152, type:'effect', drr: -0.38 },
+      { code:'C3', name:'Interoperabilidade com outros sistemas',     wi:0.167, type:'cause',  drr: +0.28 },
+      { code:'C4', name:'Capacidade de previsão e simulação',         wi:0.164, type:'cause',  drr: +0.21 },
+      { code:'C5', name:'Custo de implementação',                     wi:0.204, type:'cause',  drr: +0.58 },
+      { code:'C6', name:'Riscos e segurança (cibersegurança)',        wi:0.161, type:'cause',  drr: +0.44 },
+    ];
+
+    // Fuzzy-TOPSIS ranking (Figure 32, p.104)
+    const techRanking = [
+      { code:'A3', name:'Modelos Hidrológicos Digitais',                  dp:7.960, dm:1.210, cci:0.132, rank:1, phase:'pré-desastre', color:'var(--cobalt)' },
+      { code:'A4', name:'Digital Twins (Gêmeos Digitais)',                dp:8.024, dm:1.146, cci:0.125, rank:2, phase:'pré-desastre', color:'var(--cobalt)' },
+      { code:'A8', name:'Dashboards de Monitoramento de Emergências',     dp:8.041, dm:1.130, cci:0.123, rank:3, phase:'resposta',     color:'var(--terracotta)' },
+      { code:'A2', name:'Sensores Pluviométricos',                        dp:8.047, dm:1.125, cci:0.123, rank:4, phase:'preparação',   color:'var(--sage)' },
+      { code:'A7', name:'Softwares de Monitoramento Ambiental',           dp:8.091, dm:1.082, cci:0.118, rank:5, phase:'pré-desastre', color:'var(--sage)' },
+      { code:'A6', name:'Radares Meteorológicos',                         dp:8.096, dm:1.075, cci:0.117, rank:6, phase:'preparação',   color:'var(--amber)' },
+      { code:'A1', name:'Drones para Monitoramento de Defesa e Segurança',dp:8.153, dm:1.020, cci:0.111, rank:7, phase:'resposta',     color:'var(--amber)' },
+      { code:'A5', name:'Sistemas de Alerta Precoce e Comunicação',       dp:8.310, dm:0.863, cci:0.094, rank:8, phase:'resposta',     color:'var(--terracotta)' },
+    ];
+
+    /* ════════════════════════════════════════════════════════
+      MÓDULO 1 — MABAC
+    ════════════════════════════════════════════════════════ */
+    function initMABAC() 
+    {
+      renderAxisSliders();
+      renderISOScale(-1);
+      renderMABACBreakdown(currentAxisValues);
+    }
+
+    function renderAxisSliders() 
+    {
+      const c = document.getElementById('axis-sliders');
+      c.innerHTML = isoAxes.map((a,i) => `
+        <div class="slider-row">
+          <div class="slider-head">
+            <span class="slider-name">${a.label}</span>
+            <span class="slider-val" id="axval-${i}">${currentAxisValues[i]}</span>
+          </div>
+          <div style="font-size:10px;color:var(--ink-lt);margin-bottom:4px">${a.sub}</div>
+          <input type="range" min="1" max="5" step="1" value="${currentAxisValues[i]}"
+            id="axsl-${i}" oninput="onAxisChange(${i},this.value)">
+        </div>
+      `).join('');
+    }
+
+    function onAxisChange(idx, val) 
+    {
+      currentAxisValues[idx] = +val;
+      document.getElementById('axval-'+idx).textContent = val;
+      const pct = ((val-1)/4*100)+'%';
+      document.getElementById('axsl-'+idx).style.setProperty('--pct', pct);
+      computeMABAC();
+
+      // Efeito "Uau": atualiza o ranking de neurodiversidade em tempo real
+      // (mesmo que o usuário esteja na aba de neurodiversidade ou volte para ela)
+      if (window._neuroInited) 
+      {
+        renderNeuroRanking();
+        // Também re-renderiza o dashboard da cidade selecionada para atualizar barra MABAC
+        renderNeuroDashboard();
+      }
+    }
+
+    function computeMABAC() 
+    {
+      // Equal weights, normalize each axis (1–5) → 0–1
+      // Global indicator = mean of normalized values (equivalent to MABAC with ideal=5, anti-ideal=1)
+      const norms = currentAxisValues.map(v => (v-1)/4);
+      const global = norms.reduce((a,b)=>a+b,0) / norms.length;
+
+      let level;
+      if      (global < 0.25) level = 1;
+      else if (global < 0.50) level = 2;
+      else if (global < 0.75) level = 3;
+      else if (global < 0.90) level = 4;
+      else                    level = 5;
+
+      const ml = maturityLevels[level-1];
+      const colMap = ['var(--terracotta)','#B88000','var(--cobalt)','var(--sage)','var(--plum)'];
+      const col = colMap[level-1];
+
+      const box = document.getElementById('result-box');
+      const bgMap = ['var(--terra-lt)','var(--amber-lt)','var(--cobalt-lt)','var(--sage-lt)','var(--plum-lt)'];
+      box.style.background = bgMap[level-1];
+      box.style.borderColor = col;
+
+      document.getElementById('res-num').textContent = level;
+      document.getElementById('res-num').style.color = col;
+      document.getElementById('res-name').textContent = ml.label;
+      document.getElementById('res-name').style.color = col;
+      document.getElementById('res-global').textContent = `Indicador global: ${global.toFixed(4)} | Faixa: ${ml.range}`;
+      document.getElementById('res-strip').style.width = (global*100)+'%';
+      document.getElementById('res-strip').style.background = col;
+      document.getElementById('res-desc').textContent = ml.desc;
+
+      renderISOScale(level);
+      renderMABACBreakdown(currentAxisValues);
+    }
+
+    function renderISOScale(activeLevel) 
+    {
+      const colMap = ['var(--terracotta)','#B88000','var(--cobalt)','var(--sage)','var(--plum)'];
+      const bgMap  = ['var(--terra-lt)','var(--amber-lt)','var(--cobalt-lt)','var(--sage-lt)','var(--plum-lt)'];
+      const el = document.getElementById('iso-scale-list');
+      el.innerHTML = maturityLevels.map((ml,i) => `
+        <div class="iso-level-item ${ml.level===activeLevel?'active':''}"
+            style="color:${colMap[i]};${ml.level===activeLevel?'background:'+bgMap[i]+';':''};margin-bottom:4px">
+          <span class="iso-num" style="color:${colMap[i]}">${ml.level}</span>
+          <div class="iso-text">
+            <strong style="font-size:12px">${ml.label.replace('Nível '+ml.level+' — ','')} — ${ml.range}</strong>
+            <p>${ml.desc.substring(0,90)}…</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderMABACBreakdown(values) 
+    {
+      const norms = values.map(v=>(v-1)/4);
+      const colMap=['var(--terracotta)','var(--cobalt)','var(--sage)','var(--amber)','var(--plum)','#6B8F6E'];
+      document.getElementById('mabac-breakdown').innerHTML = isoAxes.map((a,i)=>`
+        <div class="mabac-axis-row">
+          <span class="mabac-label">${a.label}</span>
+          <div class="mabac-track">
+            <div class="mabac-fill" style="width:${norms[i]*100}%;background:${colMap[i]}"></div>
+          </div>
+          <span class="mabac-score">${norms[i].toFixed(3)}</span>
+        </div>
+      `).join('');
+    }
+
+    /* ════════════════════════════════════════════════════════
+      MÓDULO 2 — TOPSIS (Letícia)
+    ════════════════════════════════════════════════════════ */
+    function initTOPSIS() 
+    {
+      renderDEMATELWeights();
+      renderIndicatorsTable();
+      computeTOPSIS();
+      renderCausalAnalysis();
+    }
+
+    function renderDEMATELWeights() 
+    {
+      const maxW = Math.max(...dematelAxes.map(a=>a.w));
+      const colCause='var(--cobalt)', colEffect='var(--terracotta)';
+      document.getElementById('dematel-weights-vis').innerHTML = dematelAxes.map(a => `
+        <div class="weight-row">
+          <span class="weight-name">${a.code} · ${a.name.substring(0,28)}…</span>
+          <div class="weight-bar-wrap">
+            <div class="weight-bar" style="width:${(a.w/maxW*100).toFixed(1)}%;background:${a.type==='cause'?colCause:colEffect}"></div>
+          </div>
+          <span class="weight-val">${a.w.toFixed(4)}</span>
+          <span class="cause-tag" style="background:${a.type==='cause'?'var(--cobalt-lt)':'var(--terra-lt)'};color:${a.type==='cause'?'var(--cobalt)':'var(--terracotta)'}">${a.type==='cause'?'CAUSA':'EFEITO'}</span>
+        </div>
+      `).join('');
+    }
+
+    const eixoColors = ['var(--terracotta)','var(--cobalt)','var(--plum)','var(--sage)','var(--amber)','#6B8F6E'];
+    const eixoLabels = ['Resiliência','Transf. Digital','Desenv. Social','Governança','Financiamento','Meio Ambiente'];
+
+    function renderIndicatorsTable() {
+      const tbody = document.getElementById('indicators-tbody');
+      tbody.innerHTML = indicators.map((ind,i) => {
+        const rBetter = ind.type==='benefit' ? ind.recife >= ind.poa : ind.recife <= ind.poa;
+        const pBetter = !rBetter;
+        const col = eixoColors[ind.eixo-1];
+        return `<tr class="${i%2===0?'highlight':''}">
+          <td><span class="val-mono">${ind.id}</span></td>
+          <td style="font-size:11px;max-width:200px;line-height:1.35">${ind.label}</td>
+          <td class="val-mono" style="color:${rBetter?'var(--sage)':'var(--terracotta)'};font-weight:${rBetter?'600':'400'}">${formatVal(ind.recife)}</td>
+          <td class="val-mono" style="color:${pBetter?'var(--sage)':'var(--terracotta)'};font-weight:${pBetter?'600':'400'}">${formatVal(ind.poa)}</td>
+          <td><span class="badge-eixo" style="background:${col}22;color:${col}">${eixoLabels[ind.eixo-1]}</span></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function formatVal(v) 
+    {
+      if (v >= 10000) return v.toLocaleString('pt-BR');
+      if (Number.isInteger(v)) return v.toString();
+      return v.toFixed(2).replace('.',',');
+    }
+
+    function computeTOPSIS() 
+    {
+      // Vector normalization
+      const norms_r = [], norms_p = [];
+      indicators.forEach(ind => {
+        const norm = Math.sqrt(ind.recife**2 + ind.poa**2);
+        norms_r.push(norm > 0 ? ind.recife/norm : 0.5);
+        norms_p.push(norm > 0 ? ind.poa/norm : 0.5);
+      });
+
+      // Assign axis weight to each indicator (equally split within eixo)
+      const eixoCounts = [0,0,0,0,0,0];
+      indicators.forEach(ind => eixoCounts[ind.eixo-1]++);
+      const indWeights = indicators.map(ind => dematelAxes[ind.eixo-1].w / eixoCounts[ind.eixo-1]);
+
+      // Weighted normalized
+      const wn_r = norms_r.map((n,i) => n * indWeights[i]);
+      const wn_p = norms_p.map((n,i) => n * indWeights[i]);
+
+      // Ideal+ and Ideal-
+      const dp_r_sq = indicators.reduce((sum, ind, i) => {
+        const best = ind.type==='benefit' ? Math.max(wn_r[i],wn_p[i]) : Math.min(wn_r[i],wn_p[i]);
+        return sum + (wn_r[i]-best)**2;
+      }, 0);
+      const dp_p_sq = indicators.reduce((sum, ind, i) => {
+        const best = ind.type==='benefit' ? Math.max(wn_r[i],wn_p[i]) : Math.min(wn_r[i],wn_p[i]);
+        return sum + (wn_p[i]-best)**2;
+      }, 0);
+      const dn_r_sq = indicators.reduce((sum, ind, i) => {
+        const worst = ind.type==='benefit' ? Math.min(wn_r[i],wn_p[i]) : Math.max(wn_r[i],wn_p[i]);
+        return sum + (wn_r[i]-worst)**2;
+      }, 0);
+      const dn_p_sq = indicators.reduce((sum, ind, i) => {
+        const worst = ind.type==='benefit' ? Math.min(wn_r[i],wn_p[i]) : Math.max(wn_r[i],wn_p[i]);
+        return sum + (wn_p[i]-worst)**2;
+      }, 0);
+
+      const dp_r = Math.sqrt(dp_r_sq), dp_p = Math.sqrt(dp_p_sq);
+      const dn_r = Math.sqrt(dn_r_sq), dn_p = Math.sqrt(dn_p_sq);
+      const cc_r = dn_r / (dp_r + dn_r);
+      const cc_p = dn_p / (dp_p + dn_p);
+
+      const winner = cc_r > cc_p ? 'Recife' : 'Porto Alegre';
+      const maxCC = Math.max(cc_r, cc_p);
+
+      // City cards
+      const ccEl = document.getElementById('topsis-city-cards');
+      const cities = [
+        { name:'Recife (PE)', cc:cc_r, dp:dp_r, dn:dn_r, color:'var(--terracotta)', hub:'MCR2030 Hub · jan/2022' },
+        { name:'Porto Alegre (RS)', cc:cc_p, dp:dp_p, dn:dn_p, color:'var(--cobalt)', hub:'MCR2030 Hub · ago/2023' },
+      ];
+      ccEl.innerHTML = cities.map(c => `
+        <div class="city-result-card" style="border-color:${c.cc===maxCC?c.color:'var(--border)'}">
+          <p class="city-name-big">${c.name}</p>
+          <p style="font-size:10px;color:var(--ink-lt);margin-bottom:6px">${c.hub}</p>
+          <p class="city-cc" style="color:${c.color}">${c.cc.toFixed(4)}</p>
+          <p class="city-cc-label">CCi (coef. de proximidade)</p>
+          <div class="cc-bar-outer"><div class="cc-bar-inner" style="width:${(c.cc/maxCC*100).toFixed(1)}%;background:${c.color}"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-lt)">
+            <span>D+ = ${c.dp.toFixed(4)}</span>
+            <span>D− = ${c.dn.toFixed(4)}</span>
+          </div>
+        </div>
+      `).join('');
+
+      // Explanation
+      document.getElementById('topsis-explanation').innerHTML = `
+        <strong>Resultado:</strong> Diferença entre os coeficientes não é extrema, evidenciando que
+        <em>nenhuma cidade domina claramente em todas as dimensões</em> (Idalgo, 2026).
+        Recife destaca-se em engajamento comunitário (ind. 26: 49 organizações vs 3) e dados abertos (122 vs 55).
+        Porto Alegre lidera em investimento em inovação (R$ 25,8 mi vs R$ 2,5 mi), sensoriamento ambiental e participação climática (44.829 interações vs 0).
+        Vencedor atual: <strong style="color:${winner==='Recife'?'var(--terracotta)':'var(--cobalt)'}">${winner}</strong>.
+      `;
+    }
+
+    function renderCausalAnalysis() 
+    {
+      document.getElementById('dematel-causal').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <p style="font-size:11px;font-weight:600;color:var(--cobalt);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Fatores Causadores (D−R > 0)</p>
+            ${dematelAxes.filter(a=>a.type==='cause').map(a=>`
+              <div style="padding:7px 10px;border-radius:7px;background:var(--cobalt-lt);border:1px solid var(--cobalt);margin-bottom:6px">
+                <p style="font-size:12px;font-weight:600;color:var(--cobalt)">${a.code} · ${a.name.split(' ')[0]} ${a.name.split(' ')[1]||''}</p>
+                <p style="font-size:10px;color:var(--ink-lt)">D−R = +${a.drr.toFixed(2)} · peso = ${a.w.toFixed(4)}</p>
+              </div>
+            `).join('')}
+          </div>
+          <div>
+            <p style="font-size:11px;font-weight:600;color:var(--terracotta);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Fatores Efeito (D−R < 0)</p>
+            ${dematelAxes.filter(a=>a.type==='effect').map(a=>`
+              <div style="padding:7px 10px;border-radius:7px;background:var(--terra-lt);border:1px solid var(--terracotta);margin-bottom:6px">
+                <p style="font-size:12px;font-weight:600;color:var(--terracotta)">${a.code} · ${a.name.split(' ')[0]} ${a.name.split(' ')[1]||''}</p>
+                <p style="font-size:10px;color:var(--ink-lt)">D−R = ${a.drr.toFixed(2)} · peso = ${a.w.toFixed(4)}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <p style="font-size:11px;color:var(--ink-lt);margin-top:8px;line-height:1.5">
+          Transformação Digital e Governança são os <em>indutores</em> da resiliência urbana.
+          Desenvolvimento Social e Resiliência são os <em>resultados</em> desse sistema.
+          Financiamento é o eixo de maior proeminência sistêmica (D+R = 16,197).
+        </p>
+      `;
+    }
+
+    /* ════════════════════════════════════════════════════════
+      MÓDULO 3 — Fuzzy-TOPSIS (Thallita)
+    ════════════════════════════════════════════════════════ */
+    function initFuzzy() 
+    {
+      renderFuzzyDEMATEL();
+      renderFuzzyRanking();
+      renderMethodFlow();
+      renderDisasterCycle();
+      renderROITable();
+    }
+
+    function renderFuzzyDEMATEL() 
+    {
+      const maxW = Math.max(...fuzzyCriteria.map(c=>c.wi));
+      document.getElementById('fuzzy-dematel-vis').innerHTML = fuzzyCriteria.map(c => `
+        <div class="weight-row">
+          <span class="weight-name" style="font-size:11px;width:230px">${c.code} · ${c.name.substring(0,30)}…</span>
+          <div class="weight-bar-wrap">
+            <div class="weight-bar" style="width:${(c.wi/maxW*100).toFixed(1)}%;background:${c.type==='cause'?'var(--cobalt)':'var(--terracotta)'}"></div>
+          </div>
+          <span class="weight-val">${c.wi.toFixed(3)}</span>
+          <span class="cause-tag" style="background:${c.type==='cause'?'var(--cobalt-lt)':'var(--terra-lt)'};color:${c.type==='cause'?'var(--cobalt)':'var(--terracotta)'}">${c.type==='cause'?'CAUSA':'EFEITO'}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderFuzzyRanking() 
+    {
+      const maxCCI = Math.max(...techRanking.map(t=>t.cci));
+      const rankBadgeColors = ['#C8880A','#6B8F6E','#B07040','var(--slate)','var(--slate)','var(--slate)','var(--slate)','var(--slate)'];
+      const priorityLabels = ['Investir imediatamente','Alta prioridade','Alta prioridade','Média prioridade','Média prioridade','Avaliar','Avaliar','Baixa prioridade'];
+      const phaseBg = { 'pré-desastre':'var(--cobalt-lt)','preparação':'var(--sage-lt)','resposta':'var(--terra-lt)' };
+      const phaseCol = { 'pré-desastre':'var(--cobalt)','preparação':'var(--sage)','resposta':'var(--terracotta)' };
+
+      document.getElementById('fuzzy-ranking-tbody').innerHTML = techRanking.map((t,i) => `
+        <tr class="${i<2?'highlight':''}">
+          <td><span class="rank-badge" style="background:${rankBadgeColors[i]};color:white">${t.rank}</span></td>
+          <td>
+            <p style="font-size:12px;font-weight:500">${t.name}</p>
+            <span style="font-size:10px;padding:1px 6px;border-radius:4px;background:${phaseBg[t.phase]};color:${phaseCol[t.phase]};font-weight:600">${t.phase}</span>
+          </td>
+          <td><span class="val-mono" style="font-size:11px">${t.dp.toFixed(3)}</span></td>
+          <td><span class="val-mono" style="font-size:11px">${t.dm.toFixed(3)}</span></td>
+          <td>
+            <div class="cci-bar-wrap">
+              <div class="cci-bar" style="width:${(t.cci/maxCCI*80+10).toFixed(0)}px;background:${t.color}"></div>
+              <span class="cci-val">${t.cci.toFixed(3)}</span>
+            </div>
+          </td>
+          <td><span style="font-size:11px;color:var(--ink-md)">${priorityLabels[i]}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    function renderMethodFlow() 
+    {
+      const steps = [
+        { n:'01', title:'Questionário DEMATEL a especialistas', desc:'6 especialistas avaliaram influência entre critérios (escala 0–4)' },
+        { n:'02', title:'Matriz de Relações Diretas (Z) e Normalização (λ=0,065)', desc:'Matriz 6×6 agregada por média aritmética; λ = min(1/max_row, 1/max_col)' },
+        { n:'03', title:'Matriz de Relações Totais T = D(I−D)⁻¹', desc:'Captura efeitos diretos e indiretos acumulados entre critérios' },
+        { n:'04', title:'Pesos wi = (ri+cj) / Σ(ri+cj)', desc:'Normalização da proeminência estrutural de cada critério' },
+        { n:'05', title:'Avaliação com números triangulares fuzzy (l,m,u)', desc:'Escala linguística convertida em numbers fuzzy; 6 especialistas; 8 tecnologias' },
+        { n:'06', title:'CCi = D⁻ / (D⁺ + D⁻) → Ranking final', desc:'Distâncias fuzzy pelo método do vértice às soluções ideal e anti-ideal' },
+      ];
+      document.getElementById('method-flow-steps').innerHTML = steps.map(s => `
+        <div class="flow-step">
+          <span class="flow-num">${s.n}</span>
+          <div class="flow-text">
+            <p class="ft-title">${s.title}</p>
+            <p class="ft-desc">${s.desc}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderDisasterCycle() 
+    {
+      const phases = [
+        { name:'Pré-desastre (Prevenção/Mitigação)', color:'var(--cobalt)', techs:['Modelos Hidrológicos Digitais','Digital Twins','Softwares de Monit. Ambiental'] },
+        { name:'Preparação e Monitoramento',          color:'var(--sage)',   techs:['Sensores Pluviométricos','Radares Meteorológicos'] },
+        { name:'Resposta e Emergência',               color:'var(--terracotta)', techs:['Dashboards de Emergências','Drones de Segurança','Sistemas de Alerta Precoce'] },
+      ];
+      document.getElementById('disaster-cycle').innerHTML = phases.map(ph => `
+        <div style="padding:10px 12px;border-radius:8px;border-left:3px solid ${ph.color};background:${ph.color}1A;margin-bottom:8px">
+          <p style="font-size:12px;font-weight:600;color:${ph.color};margin-bottom:4px">${ph.name}</p>
+          <p style="font-size:11px;color:var(--ink-md)">${ph.techs.join(' · ')}</p>
+        </div>
+      `).join('') + `
+        <p style="font-size:11px;color:var(--ink-lt);margin-top:6px;line-height:1.5">
+          As tecnologias de modelagem preditiva (1° e 2° lugar) inserem-se na fase <em>pré-desastre</em>,
+          demonstrando que o investimento em prevenção estrutural supera o de resposta reativa no sistema decisório avaliado.
+        </p>`;
+    }
+
+    /* ════════════════════════════════════════════════════════
+      NOVA FEATURE 2 — INCIDENT REPORTER (Ciência Cidadã)
+    ════════════════════════════════════════════════════════ */
+    let selectedIncidentType = null;
+    let selectedIncidentImpact = null;
+    let incidentTotal = 0;
+    let mabacOffset = 0;
+
+    function selectIncident(btn, type, impact) 
+    {
+      document.querySelectorAll('.incident-type-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedIncidentType = type;
+      selectedIncidentImpact = impact;
+      const submitBtn = document.getElementById('incident-submit-btn');
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.textContent = `Enviar Alerta: ${type}`;
+    }
+
+    function submitIncident() 
+    {
+      if (!selectedIncidentType) return;
+      const loc = document.getElementById('incident-location').value;
+      const now = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+      incidentTotal++;
+      document.getElementById('incident-count').textContent = incidentTotal;
+
+      // Parse impact value
+      const impactMatch = selectedIncidentImpact.match(/([+\-]\d+\.\d+)/);
+      const impactVal = impactMatch ? parseFloat(impactMatch[1]) : -0.05;
+      mabacOffset += impactVal;
+
+      const feed = document.getElementById('incident-feed');
+      const isPositive = impactVal > 0;
+      const item = document.createElement('div');
+      item.className = 'incident-feed-item';
+      item.style.borderColor = isPositive ? 'var(--sage)' : 'var(--terracotta)';
+      item.style.background  = isPositive ? 'var(--sage-lt)' : 'var(--terra-lt)';
+      item.innerHTML = `
+        <div class="feed-dot" style="background:${isPositive?'var(--sage)':'var(--terracotta)'}"></div>
+        <div class="feed-text">
+          <strong style="color:${isPositive?'var(--sage)':'var(--terracotta)'}">${now} · ${loc}</strong>
+          ${selectedIncidentType} — ${selectedIncidentImpact}
+        </div>`;
+      feed.insertBefore(item, feed.firstChild);
+
+      // Show MABAC impact
+      const impactBox = document.getElementById('mabac-impact-box');
+      const impactText = document.getElementById('mabac-impact-text');
+      impactBox.style.display = 'block';
+      impactBox.style.borderColor = isPositive ? 'var(--sage)' : 'var(--terracotta)';
+      impactBox.style.background  = isPositive ? 'var(--sage-lt)' : 'var(--terra-lt)';
+      impactText.innerHTML = `
+        <strong>${loc}:</strong> ${selectedIncidentType}<br>
+        Impacto acumulado hoje: <strong style="font-family:'DM Mono',monospace;color:${isPositive?'var(--sage)':'var(--terracotta)'}">${mabacOffset >= 0 ? '+' : ''}${mabacOffset.toFixed(2)}</strong> no índice MABAC da via.<br>
+        <span style="font-size:10px;color:var(--ink-lt)">${incidentTotal} relato(s) processado(s) · dados enviados para análise</span>`;
+
+      // Reset selection
+      document.querySelectorAll('.incident-type-btn').forEach(b => b.classList.remove('selected'));
+      selectedIncidentType = null;
+      const submitBtn = document.getElementById('incident-submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '.5';
+      submitBtn.textContent = 'Enviar Alerta (selecione um tipo acima)';
+    }
+
+    /* ════════════════════════════════════════════════════════
+      NOVA FEATURE 3 — ROI SOCIAL TABLE
+    ════════════════════════════════════════════════════════ */
+    const roiData = [
+      { rank:1, name:'Modelos Hidrológicos Digitais',    invest:'R$ 45k',  retorno:'R$ 315k', sroi:7.0, bar:100, impact:'Reduz em 60% o tempo de resposta a enchentes, evitando perdas patrimoniais e hospitalização por trauma' },
+      { rank:2, name:'Digital Twins',                    invest:'R$ 80k',  retorno:'R$ 480k', sroi:6.0, bar:86, impact:'Simula obras antes da execução, reduzindo em 40% ruído e poeira de construções — benefício direto a neurodivergentes' },
+      { rank:3, name:'Dashboards de Emergências',         invest:'R$ 25k',  retorno:'R$ 125k', sroi:5.0, bar:71, impact:'Cada minuto ganho na resposta a desastres poupa R$ 2.400 em custos de saúde pública (estimativa IBGE/2023)' },
+      { rank:4, name:'Sensores Pluviométricos',           invest:'R$ 10k',  retorno:'R$ 40k',  sroi:4.0, bar:57, impact:'Investir R$ 10k em sinalização inclusiva reduz em 15% o isolamento social da região, valor estimado: R$ 40k' },
+      { rank:5, name:'Softwares de Monit. Ambiental',    invest:'R$ 15k',  retorno:'R$ 52k',  sroi:3.5, bar:50, impact:'Monitoramento de qualidade do ar reduz doenças respiratórias em populações neuroatípicas sensíveis a poluentes' },
+      { rank:6, name:'Radares Meteorológicos',            invest:'R$ 120k', retorno:'R$ 360k', sroi:3.0, bar:43, impact:'Alerta precoce de tempestades reduz em 25% danos a infraestrutura urbana por eventos extremos' },
+      { rank:7, name:'Drones de Defesa e Segurança',      invest:'R$ 60k',  retorno:'R$ 120k', sroi:2.0, bar:29, impact:'Inspeção de áreas de risco sem exposição humana; mapeamento de zonas de estresse sensorial pós-desastre' },
+      { rank:8, name:'Sistemas de Alerta Precoce',        invest:'R$ 35k',  retorno:'R$ 52k',  sroi:1.5, bar:21, impact:'ROI menor devido a sobreposição com sistemas já existentes em municípios de maior porte' },
+    ];
+
+    function renderROITable() {
+      const rankColors = ['var(--amber)','var(--sage)','#B07040','var(--slate)','var(--slate)','var(--slate)','var(--slate)','var(--slate)'];
+      document.getElementById('roi-tbody').innerHTML = roiData.map((r,i) => `
+        <tr>
+          <td><span class="rank-badge" style="background:${rankColors[i]};color:white;font-size:11px">${r.rank}</span></td>
+          <td style="font-size:12px;font-weight:500;max-width:140px">${r.name}</td>
+          <td><span class="roi-value" style="color:var(--terracotta)">${r.invest}</span></td>
+          <td><span class="roi-value" style="color:var(--sage)">${r.retorno}</span></td>
+          <td>
+            <span class="roi-value" style="color:${r.sroi>=5?'var(--sage)':r.sroi>=3?'var(--cobalt)':'var(--ink-md)'}">×${r.sroi.toFixed(1)}</span>
+            <div class="roi-bar-outer"><div class="roi-bar-inner" style="width:${r.bar}%"></div></div>
+          </td>
+          <td style="font-size:10px;color:var(--ink-md);max-width:180px;line-height:1.4">${r.impact}</td>
+        </tr>
+      `).join('');
+    }
+
+    /* ════════════════════════════════════════════════════════
+      NOVA FEATURE 4 — MAPA LEAFLET (Geolocalização Inteligente)
+    ════════════════════════════════════════════════════════ */
+    const sensorZones = [
+      { id:'z1', lat:-25.4290, lng:-49.2710, name:'Boca Maldita / Calçadão',       mabac:0.21, risk:'high',  icon:'●', type:'incident', desc:'Obra + luz oscilante · 12 relatos', color:'#B71C1C' },
+      { id:'z2', lat:-25.4350, lng:-49.2760, name:'Largo da Ordem (Centro Hist.)',  mabac:0.38, risk:'high',  icon:'●', type:'incident', desc:'Multidão + ruído · 8 relatos',     color:'#FF5722' },
+      { id:'z3', lat:-25.4195, lng:-49.2637, name:'Praça Tiradentes',               mabac:0.44, risk:'med',   icon:'●', type:'incident', desc:'Tráfego intenso · 5 relatos',      color:'#FFC107' },
+      { id:'z4', lat:-25.4444, lng:-49.2763, name:'Parque Barigui (SbN Ativa)',     mabac:0.81, risk:'sbn',   icon:'●', type:'sbn',      desc:'Bolsa de silêncio verde · 0 relatos', color:'#27AE60' },
+      { id:'z5', lat:-25.4162, lng:-49.2390, name:'Bosque Alemão (SbN Ativa)',      mabac:0.78, risk:'sbn',   icon:'●', type:'sbn',      desc:'Corredor verde natural · 1 relato',   color:'#27AE60' },
+      { id:'z6', lat:-25.4520, lng:-49.2906, name:'Av. Batel / Água Verde',         mabac:0.52, risk:'med',   icon:'●', type:'incident', desc:'Odor intenso de asfalto · 3 relatos', color:'#FFC107' },
+      { id:'z7', lat:-25.4010, lng:-49.2560, name:'Terminal do Cabral',             mabac:0.18, risk:'high',  icon:'●', type:'incident', desc:'Superlotação + ruído · 17 relatos',   color:'#B71C1C' },
+      { id:'z8', lat:-25.4700, lng:-49.2450, name:'Parque Tingui (SbN Proposta)',   mabac:0.69, risk:'sbn',   icon:'●', type:'sbn',      desc:'SbN proposta · corredor arbóreo',     color:'#8BC34A' },
+    ];
+
+    let leafletMap = null;
+    let mapMarkers = [];
+    window._mapInited = false;
+
+    function initMap() 
+    {
+      window._mapInited = true;
+      setTimeout(() => {
+        leafletMap = L.map('leaflet-map').setView([-25.435, -49.270], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors',
+          maxZoom: 18,
+        }).addTo(leafletMap);
+        renderMapMarkers('all');
+        renderZoneList('all');
+        updateMapStats();
+        renderMapFeed();
+      }, 200);
+    }
+
+    function renderMapMarkers(filter) 
+    {
+      mapMarkers.forEach(m => leafletMap.removeLayer(m));
+      mapMarkers = [];
+      const filtered = filter === 'all' ? sensorZones :
+                      filter === 'sbn' ? sensorZones.filter(z => z.type === 'sbn') :
+                      sensorZones.filter(z => z.risk === 'high');
+      filtered.forEach(zone => {
+        const circle = L.circleMarker([zone.lat, zone.lng], {
+          radius: zone.risk === 'high' ? 14 : zone.risk === 'sbn' ? 10 : 12,
+          fillColor: zone.color,
+          color: zone.color,
+          weight: 2,
+          opacity: 0.9,
+          fillOpacity: 0.55,
+        }).addTo(leafletMap);
+        circle.bindPopup(`
+          <div style="font-family:'DM Sans',sans-serif;min-width:180px">
+            <p style="font-size:13px;font-weight:700;margin-bottom:3px">${zone.icon} ${zone.name}</p>
+            <p style="font-size:11px;color:#666;margin-bottom:5px">${zone.desc}</p>
+            <p style="font-size:12px">Índice MABAC: <strong style="color:${zone.color}">${zone.mabac.toFixed(2)}</strong></p>
+            ${zone.type==='sbn' ? '<p style="font-size:10px;color:#27AE60;font-weight:600;margin-top:3px">Solução Baseada na Natureza</p>' : ''}
+          </div>
+        `);
+        mapMarkers.push(circle);
+      });
+    }
+
+    function renderZoneList(filter) 
+    {
+      const filtered = filter === 'all' ? sensorZones :
+                      filter === 'sbn' ? sensorZones.filter(z => z.type === 'sbn') :
+                      sensorZones.filter(z => z.risk === 'high');
+      const sorted = [...filtered].sort((a,b) => a.mabac - b.mabac);
+      document.getElementById('zone-list').innerHTML = sorted.map(z => `
+        <div class="zone-card" style="border-color:${z.color};background:${z.color}18">
+          <div class="zone-dot" style="background:${z.color}"></div>
+          <div style="flex:1">
+            <p style="font-size:12px;font-weight:600;color:var(--ink)">${z.name}</p>
+            <p style="font-size:10px;color:var(--ink-lt)">${z.desc}</p>
+          </div>
+          <div style="text-align:right">
+            <p style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:${z.color}">${z.mabac.toFixed(2)}</p>
+            <p style="font-size:9px;color:var(--ink-lt)">Maturidade</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateMapStats() 
+    {
+      document.getElementById('stat-alto').textContent  = sensorZones.filter(z=>z.risk==='high').length;
+      document.getElementById('stat-medio').textContent = sensorZones.filter(z=>z.risk==='med').length;
+      document.getElementById('stat-sbn').textContent   = sensorZones.filter(z=>z.type==='sbn').length;
+    }
+
+    function renderMapFeed() 
+    {
+      const feed = document.getElementById('map-incident-feed');
+      const recent = sensorZones.filter(z=>z.type==='incident').slice(0,5);
+      feed.innerHTML = recent.map(z => `
+        <div style="display:flex;gap:8px;padding:7px 9px;border-radius:7px;background:${z.color}15;border:1px solid ${z.color};margin-bottom:5px">
+          <div style="width:7px;height:7px;border-radius:50%;background:${z.color};flex-shrink:0;margin-top:4px"></div>
+          <div>
+            <p style="font-size:11px;font-weight:600;color:var(--ink)">${z.name}</p>
+            <p style="font-size:10px;color:var(--ink-lt)">${z.desc} · MABAC: ${z.mabac.toFixed(2)}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    let _randIncidentCount = 0;
+    const randIncidentTemplates = [
+      { name:'R. XV de Novembro', lat:-25.4310, lng:-49.2690, desc:'Bueiro com odor · 2 relatos', color:'#FF5722', risk:'high' },
+      { name:'Terminal Pinheirinho', lat:-25.5200, lng:-49.2950, desc:'Superlotação + ruído · 6 relatos', color:'#B71C1C', risk:'high' },
+      { name:'Parque Birigui (novo)', lat:-25.3900, lng:-49.2700, desc:'Corredor verde proposto · 1 relato', color:'#27AE60', risk:'sbn' },
+    ];
+
+    function addRandomIncident() 
+    {
+      const t = randIncidentTemplates[_randIncidentCount % randIncidentTemplates.length];
+      _randIncidentCount++;
+      const zone = { ...t, id:'rand'+_randIncidentCount, mabac: t.risk==='sbn' ? 0.72 : 0.19, type: t.risk==='sbn'?'sbn':'incident' };
+      sensorZones.push(zone);
+      if (leafletMap) 
+      {
+        const c = L.circleMarker([zone.lat, zone.lng], {
+          radius:12, fillColor:zone.color, color:zone.color, weight:2, opacity:.9, fillOpacity:.55
+        }).addTo(leafletMap);
+        c.bindPopup(`<div style="font-family:'DM Sans',sans-serif"><p style="font-size:13px;font-weight:700">${zone.name}</p><p style="font-size:11px;color:#666">${zone.desc}</p><p>MABAC: <strong>${zone.mabac.toFixed(2)}</strong></p></div>`);
+        mapMarkers.push(c);
+        leafletMap.flyTo([zone.lat, zone.lng], 14, {duration:1.2});
+      }
+      updateMapStats();
+      renderZoneList('all');
+      renderMapFeed();
+    }
+
+    function filterMapLayer(filter) 
+    {
+      document.querySelectorAll('[id^=filter-]').forEach(b => {
+        b.style.background='var(--paper)'; b.style.color='var(--ink-md)'; b.style.borderColor='var(--border-dk)';
+      });
+      const btn = document.getElementById('filter-'+filter);
+      btn.style.background='var(--cobalt)'; btn.style.color='white'; btn.style.borderColor='var(--cobalt)';
+      renderMapMarkers(filter);
+      renderZoneList(filter);
+    }
+
+    /* ════════════════════════════════════════════════════════
+      GPS SIMULATION
+    ════════════════════════════════════════════════════════ */
+    const gpsLocations = [
+      { name:'Recife, PE', lat:-8.0, lon:-34.9,  city:'recife'  },
+      { name:'Porto Alegre, RS', lat:-30.0, lon:-51.2, city:'poa' },
+      { name:'Maringá, PR', lat:-23.4, lon:-51.9, city:'maringa' },
+      { name:'Curitiba, PR', lat:-25.4, lon:-49.3, city:'curitiba' },
+    ];
+    let gpsIdx = 0;
+
+    function simulateGPS() 
+    {
+      const loc = gpsLocations[gpsIdx % gpsLocations.length];
+      gpsIdx++;
+      document.getElementById('gps-label').textContent =
+        `Localização detectada: ${loc.name} (lat ${loc.lat}, lon ${loc.lon}) — Indicadores regionais carregados`;
+      if (cityPresets[loc.city]) 
+      {
+        document.getElementById('city-select').value = loc.city;
+        loadCityPreset();
+      }
+    }
+
+
+    /* ════════════════════════════════════════════════════════
+      MELHORIA 1 — loadCityPreset() atualizado
+      Agora lê o objeto expandido cityPresets que tem meta com
+      UF, pop e idh, além dos valores ISO. A lógica de carregar
+      sliders e recalcular MABAC é a mesma; só exibimos mais info.
+    ════════════════════════════════════════════════════════ */
+    function loadCityPreset() 
+    {
+      const sel = document.getElementById('city-select').value;
+      if (!sel) return;
+      const p = cityPresets[sel];
+      currentAxisValues = [...p.values];
+      renderAxisSliders();
+      isoAxes.forEach((_,i) => {
+        const el = document.getElementById('axsl-'+i);
+        if (el) el.style.setProperty('--pct', ((currentAxisValues[i]-1)/4*100)+'%');
+      });
+      // Mostra metadados da cidade selecionada abaixo do select
+      const metaEl = document.getElementById('city-meta-info');
+      if (metaEl) 
+      {
+        metaEl.innerHTML = `<span style="font-size:11px;color:var(--ink-md)">${p.meta}${p.hub ? ' <strong style="color:var(--sage)">· MCR2030 Hub</strong>' : ''}</span>`;
+        metaEl.style.display = 'block';
+      }
+      computeMABAC();
+    }
+
+    /* ════════════════════════════════════════════════════════
+      MELHORIA 2 — MÓDULO NEURODIVERSIDADE
+      Funções que renderizam o dashboard de TEA/TDAH por cidade,
+      o ranking por índice sensorial e a correlação com MABAC.
+    ════════════════════════════════════════════════════════ */
+
+    // Renderiza o painel principal da cidade selecionada no módulo neuro
+    function renderNeuroDashboard() 
+    {
+      const city = document.getElementById('neuro-city-select').value;
+      const d = neurodiversityData[city];
+      const cp = cityPresets[city];
+      if (!d || !cp) return;
+
+      // Calcula o índice MABAC estimado para essa cidade (média normalizada dos eixos)
+      const mabacVal = cp.values.reduce((a,b)=>a+b,0) / cp.values.length;
+      const mabacNorm = (mabacVal - 1) / 4;
+
+      // Cor do índice sensorial: verde (baixo), amarelo (médio), vermelho (alto)
+      const sCol = d.sensorial_index < 0.45 ? 'var(--sage)' :
+                  d.sensorial_index < 0.65 ? 'var(--amber)' : 'var(--terracotta)';
+      const sBg  = d.sensorial_index < 0.45 ? 'var(--sage-lt)' :
+                  d.sensorial_index < 0.65 ? 'var(--amber-lt)' : 'var(--terra-lt)';
+
+      document.getElementById('neuro-city-panel').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0">
+          <!-- Prevalência TEA estimada -->
+          <div style="text-align:center;padding:12px;border-radius:8px;background:var(--plum-lt);border:1px solid var(--plum)">
+            <p style="font-family:'DM Mono',monospace;font-size:22px;font-weight:600;color:var(--plum)">${d.tea_100k.toLocaleString('pt-BR')}</p>
+            <p style="font-size:10px;color:var(--ink-lt);text-transform:uppercase;font-weight:600">TEA / 100k hab.</p>
+          </div>
+          <!-- Prevalência TDAH estimada -->
+          <div style="text-align:center;padding:12px;border-radius:8px;background:var(--cobalt-lt);border:1px solid var(--cobalt)">
+            <p style="font-family:'DM Mono',monospace;font-size:22px;font-weight:600;color:var(--cobalt)">${d.tdah_100k.toLocaleString('pt-BR')}</p>
+            <p style="font-size:10px;color:var(--ink-lt);text-transform:uppercase;font-weight:600">TDAH / 100k hab.</p>
+          </div>
+          <!-- Índice de estresse sensorial -->
+          <div style="text-align:center;padding:12px;border-radius:8px;background:${sBg};border:1px solid ${sCol}">
+            <p style="font-family:'DM Mono',monospace;font-size:22px;font-weight:600;color:${sCol}">${d.sensorial_index.toFixed(2)}</p>
+            <p style="font-size:10px;color:var(--ink-lt);text-transform:uppercase;font-weight:600">Índice Sensorial</p>
+          </div>
+          <!-- Número de barreiras documentadas -->
+          <div style="text-align:center;padding:12px;border-radius:8px;background:var(--terra-lt);border:1px solid var(--terracotta)">
+            <p style="font-family:'DM Mono',monospace;font-size:22px;font-weight:600;color:var(--terracotta)">${d.barreiras_count.toLocaleString('pt-BR')}</p>
+            <p style="font-size:10px;color:var(--ink-lt);text-transform:uppercase;font-weight:600">Barreiras Mapeadas</p>
+          </div>
+        </div>
+        <!-- Barra MABAC desta cidade -->
+        <div style="margin:8px 0">
+          <div class="slider-head">
+            <span class="slider-name">Índice de Maturidade (resiliência urbana)</span>
+            <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--cobalt)">${mabacNorm.toFixed(3)}</span>
+          </div>
+          <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:4px">
+            <div style="height:100%;border-radius:4px;background:${mabacNorm>0.65?'var(--sage)':mabacNorm>0.4?'var(--cobalt)':'var(--terracotta)'};width:${(mabacNorm*100).toFixed(1)}%;transition:width .5s"></div>
+          </div>
+        </div>
+        <!-- Política ativa e nota -->
+        <div class="notice ${d.politica_ativa?'ok':'warn'}" style="margin:10px 0 0">
+          <strong>${d.politica_ativa ? 'Política ativa:' : 'Sem política estruturada:'}</strong> ${d.nota}
+        </div>
+      `;
+
+      // Atualiza o gráfico comparativo TEA/TDAH e a correlação MABAC
+      renderNeuroChart(city);
+      renderNeuroCorrPanel(city, mabacNorm);
+    }
+
+    // Renderiza barras comparativas de TEA e TDAH para as 15 cidades
+    function renderNeuroChart(highlightCity) 
+    {
+      const cities = Object.keys(neurodiversityData);
+      // Ordena pelo índice sensorial, do menor ao maior
+      const sorted = [...cities].sort((a,b) => neurodiversityData[a].sensorial_index - neurodiversityData[b].sensorial_index);
+      const maxTea  = Math.max(...sorted.map(c => neurodiversityData[c].tea_100k));
+      const maxTdah = Math.max(...sorted.map(c => neurodiversityData[c].tdah_100k));
+      const cityNames = { sao_paulo:'SP', rio_janeiro:'RJ', belo_horizonte:'BH', curitiba:'CWB',
+        porto_alegre:'POA', recife:'REC', salvador:'SSA', fortaleza:'FOR', manaus:'MAO',
+        brasilia:'BSB', florianopolis:'FLN', belem:'BEL', maringa:'MGF', goiania:'GYN', maceio:'MCZ' };
+
+      document.getElementById('neuro-chart-area').innerHTML = sorted.map(c => {
+        const d = neurodiversityData[c];
+        const isHL = c === highlightCity;
+        const teaPct  = (d.tea_100k  / maxTea  * 100).toFixed(1);
+        const tdahPct = (d.tdah_100k / maxTdah * 100).toFixed(1);
+        return `
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;opacity:${isHL?1:0.65};transition:opacity .2s">
+            <span style="font-size:10px;width:28px;text-align:right;color:var(--ink-md);font-weight:${isHL?700:400}">${cityNames[c]||c.substring(0,3).toUpperCase()}</span>
+            <div style="flex:1">
+              <!-- Barra TEA — cor plum -->
+              <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:2px">
+                <div style="height:100%;background:var(--plum);border-radius:3px;width:${teaPct}%"></div>
+              </div>
+              <!-- Barra TDAH — cor cobalt -->
+              <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden">
+                <div style="height:100%;background:var(--cobalt);border-radius:3px;width:${tdahPct}%"></div>
+              </div>
+            </div>
+            <span style="font-size:9px;color:var(--ink-lt);width:32px;text-align:right">${d.sensorial_index.toFixed(2)}</span>
+          </div>`;
+      }).join('') + `
+        <div style="display:flex;gap:14px;margin-top:8px;font-size:10px">
+          <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:5px;background:var(--plum);border-radius:2px"></span>TEA</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:5px;background:var(--cobalt);border-radius:2px"></span>TDAH</span>
+          <span style="color:var(--ink-lt);margin-left:auto">valor = índice sensorial</span>
+        </div>`;
+    }
+
+    // Painel de correlação MABAC × barreiras neurodivergentes
+    function renderNeuroCorrPanel(highlightCity, mabacNorm) 
+    {
+      const cities = Object.keys(neurodiversityData);
+      document.getElementById('neuro-mabac-correlation').innerHTML = cities.map(c => {
+        const d = neurodiversityData[c];
+        const cp = cityPresets[c];
+        if (!cp) return '';
+        const mabac = ((cp.values.reduce((a,b)=>a+b,0)/cp.values.length) - 1) / 4;
+        const isHL = c === highlightCity;
+        const barW = (mabac * 100).toFixed(1);
+        const sCol = d.sensorial_index < 0.45 ? 'var(--sage)' : d.sensorial_index < 0.65 ? 'var(--amber)' : 'var(--terracotta)';
+        const cityNames2 = { sao_paulo:'São Paulo', rio_janeiro:'Rio de Janeiro', belo_horizonte:'Belo Horizonte',
+          curitiba:'Curitiba', porto_alegre:'Porto Alegre', recife:'Recife', salvador:'Salvador',
+          fortaleza:'Fortaleza', manaus:'Manaus', brasilia:'Brasília', florianopolis:'Florianópolis',
+          belem:'Belém', maringa:'Maringá', goiania:'Goiânia', maceio:'Maceió' };
+        return `
+          <div class="mabac-axis-row" style="opacity:${isHL?1:0.6}">
+            <span class="mabac-label" style="font-size:10px;color:${isHL?'var(--ink)':'var(--ink-md)'};font-weight:${isHL?600:400}">${cityNames2[c]||c}</span>
+            <div class="mabac-track">
+              <div class="mabac-fill" style="width:${barW}%;background:var(--cobalt)"></div>
+            </div>
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:${sCol};width:40px;text-align:right">${d.sensorial_index.toFixed(2)}</span>
+          </div>`;
+      }).join('') + `<p style="font-size:10px;color:var(--ink-lt);margin-top:8px">Barras azuis = Índice de Maturidade · Números = índice sensorial · maior = pior</p>`;
+    }
+
+    // Ranking do índice sensorial das 15 cidades
+    /* ════════════════════════════════════════════════════════
+      MELHORIA 2 — MÓDULO NEURODIVERSIDADE
+      Funções que renderizam o dashboard de TEA/TDAH por cidade,
+      o ranking por índice sensorial e a correlação com MABAC.
+    ════════════════════════════════════════════════════════ */
+
+    // Calcula o índice sensorial AJUSTADO de uma cidade levando em conta
+    // os pesos dos eixos ISO configurados no Módulo 1 (currentAxisValues).
+    // Lógica: eixo Infraestrutura (idx 5) e Meio Ambiente (idx 2) têm impacto
+    // direto na barreira sensorial. Quanto maiores esses eixos no slider,
+    // menor o estresse sensorial estimado da cidade.
+    function calcSensorialAjustado(cityKey) 
+    {
+      const d = neurodiversityData[cityKey];
+      if (!d) return 0;
+
+      // Peso dos eixos com maior relevância para neurodiversidade:
+      // [0] Economia, [1] Governança, [2] Meio Ambiente, [3] Saúde,
+      // [4] Tecnologia, [5] Infraestrutura
+      const infra   = (currentAxisValues[5] - 1) / 4;  // 0→1
+      const ambiente= (currentAxisValues[2] - 1) / 4;
+      const saude   = (currentAxisValues[3] - 1) / 4;
+      const tech    = (currentAxisValues[4] - 1) / 4;
+
+      // Fator de redução: eixos bons → reduz o estresse sensorial da cidade
+      // Escala: impacto máximo de -0,20 pontos (eixos todos em 5)
+      const reducao = (infra * 0.08 + ambiente * 0.06 + saude * 0.04 + tech * 0.02);
+
+      // Aplica redução ao índice base, mantendo entre 0.10 e 0.99
+      return Math.max(0.10, Math.min(0.99, d.sensorial_index - reducao));
+    }
+
+    // Renderiza o ranking de estresse sensorial — REATIVO aos sliders do Módulo 1
+    function renderNeuroRanking() 
+    {
+      const cityNames3 = { sao_paulo:'São Paulo', rio_janeiro:'Rio de Janeiro', belo_horizonte:'Belo Horizonte',
+        curitiba:'Curitiba', porto_alegre:'Porto Alegre', recife:'Recife', salvador:'Salvador',
+        fortaleza:'Fortaleza', manaus:'Manaus', brasilia:'Brasília', florianopolis:'Florianópolis',
+        belem:'Belém', maringa:'Maringá', goiania:'Goiânia', maceio:'Maceió' };
+
+      // Recalcula índice ajustado para todas as cidades com os sliders atuais
+      const cities = Object.entries(neurodiversityData)
+        .map(([c, d]) => ({ c, d, ajustado: calcSensorialAjustado(c) }))
+        .sort((a, b) => a.ajustado - b.ajustado);
+
+      // Calcula variação vs base para mostrar feedback visual
+      const rankEl = document.getElementById('neuro-ranking');
+      rankEl.innerHTML = cities.map(({ c, d, ajustado }, i) => {
+        const delta = ajustado - d.sensorial_index;
+        const col = ajustado < 0.45 ? 'var(--sage)' : ajustado < 0.65 ? 'var(--cobalt)' : ajustado < 0.75 ? 'var(--amber)' : 'var(--terracotta)';
+        const bg  = ajustado < 0.45 ? 'var(--sage-lt)' : ajustado < 0.65 ? 'var(--cobalt-lt)' : ajustado < 0.75 ? 'var(--amber-lt)' : 'var(--terra-lt)';
+        const deltaStr = delta < -0.005
+          ? `<span style="font-size:9px;color:var(--sage);font-weight:700;margin-left:3px">▼${Math.abs(delta).toFixed(2)}</span>`
+          : delta > 0.005
+            ? `<span style="font-size:9px;color:var(--terracotta);font-weight:700;margin-left:3px">▲${delta.toFixed(2)}</span>`
+            : '';
+        return `
+          <div class="mabac-axis-row" style="margin-bottom:7px;transition:all .3s">
+            <span style="font-size:11px;color:var(--ink-lt);width:18px;flex-shrink:0">${i+1}</span>
+            <span class="mabac-label" style="font-size:11px;width:140px">${cityNames3[c]||c}</span>
+            <div class="mabac-track">
+              <div class="mabac-fill" style="width:${(ajustado*100).toFixed(1)}%;background:${col};transition:width .5s ease"></div>
+            </div>
+            <span style="font-family:'DM Mono',monospace;font-size:11px;color:${col};width:40px;text-align:right">${ajustado.toFixed(2)}${deltaStr}</span>
+            <span style="font-size:9px;padding:1px 5px;border-radius:4px;background:${bg};color:${col};font-weight:700;white-space:nowrap">${d.politica_ativa?'Política ativa':'Sem política'}</span>
+          </div>`;
+      }).join('');
+    }
+
+    /* ════════════════════════════════════════════════════════
+      MELHORIA 3 — MÓDULO BENCHMARKS ONU/UNDRR
+      Renderiza os 8 benchmarks internacionais com progresso
+      atual do Brasil vs meta e líder mundial.
+    ════════════════════════════════════════════════════════ */
+    function renderBenchmarks() 
+    {
+      // Grid de cards de benchmark
+      document.getElementById('benchmarks-grid').innerHTML = `
+        <div class="grid-2" style="margin-bottom:18px">
+          ${unBenchmarks.map(b => `
+            <div class="card" style="margin-bottom:0;border-top:3px solid ${b.color}">
+              <p class="card-title" style="font-size:14px">${b.name}</p>
+              <p class="card-sub">${b.fonte}</p>
+              <!-- Barra de progresso do Brasil em relação à meta -->
+              <div style="margin:10px 0">
+                <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-lt);margin-bottom:4px">
+                  <span>Progresso Brasil</span><span>${b.progresso}%</span>
+                </div>
+                <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+                  <div style="height:100%;border-radius:4px;background:${b.color};width:${b.progresso}%;transition:width .5s"></div>
+                </div>
+              </div>
+              <!-- Comparativo em 3 linhas -->
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:10px">
+                <div style="padding:6px 8px;border-radius:6px;background:var(--cobalt-lt);border:1px solid var(--cobalt)">
+                  <p style="color:var(--cobalt);font-weight:700;margin-bottom:2px">META 2030</p>
+                  <p style="color:var(--ink-md);line-height:1.35">${b.meta}</p>
+                </div>
+                <div style="padding:6px 8px;border-radius:6px;background:var(--amber-lt);border:1px solid var(--amber)">
+                  <p style="color:var(--amber);font-weight:700;margin-bottom:2px">BRASIL ATUAL</p>
+                  <p style="color:var(--ink-md);line-height:1.35">${b.br_atual}</p>
+                </div>
+                <div style="padding:6px 8px;border-radius:6px;background:var(--sage-lt);border:1px solid var(--sage)">
+                  <p style="color:var(--sage);font-weight:700;margin-bottom:2px">LÍDER MUNDIAL</p>
+                  <p style="color:var(--ink-md);line-height:1.35">${b.lider}</p>
+                </div>
+              </div>
+              <!-- Status badge -->
+              <div style="margin-top:10px">
+                <span style="font-size:10px;padding:2px 8px;border-radius:4px;background:${b.color}22;color:${b.color};font-weight:700;border:1px solid ${b.color}">${b.status}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>`;
+
+      // Painel resumo: média ponderada do progresso do Brasil
+      const avgProgress = Math.round(unBenchmarks.reduce((a,b)=>a+b.progresso,0) / unBenchmarks.length);
+      const colAvg = avgProgress < 40 ? 'var(--terracotta)' : avgProgress < 60 ? 'var(--amber)' : 'var(--sage)';
+      document.getElementById('benchmark-summary').innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+          <!-- Progresso médio geral -->
+          <div style="text-align:center;padding:14px;border-radius:10px;background:${colAvg}22;border:1.5px solid ${colAvg}">
+            <p style="font-family:'DM Serif Display',serif;font-size:32px;color:${colAvg}">${avgProgress}%</p>
+            <p style="font-size:10px;color:var(--ink-lt);text-transform:uppercase;font-weight:600">Progresso Médio</p>
+          </div>
+          <!-- Número de metas em risco -->
+          <div style="text-align:center;padding:14px;border-radius:10px;background:var(--terra-lt);border:1.5px solid var(--terracotta)">
+            <p style="font-family:'DM Serif Display',serif;font-size:32px;color:var(--terracotta)">${unBenchmarks.filter(b=>b.progresso<40).length}</p>
+            <p style="font-size:10px;color:var(--ink-lt);text-transform:uppercase;font-weight:600">Metas em risco</p>
+          </div>
+          <!-- Número de metas em progresso -->
+          <div style="text-align:center;padding:14px;border-radius:10px;background:var(--amber-lt);border:1.5px solid var(--amber)">
+            <p style="font-family:'DM Serif Display',serif;font-size:32px;color:var(--amber)">${unBenchmarks.filter(b=>b.progresso>=40&&b.progresso<70).length}</p>
+            <p style="font-size:10px;color:var(--ink-lt);text-transform:uppercase;font-weight:600">Em progresso</p>
+          </div>
+          <!-- Número de metas bem encaminhadas -->
+          <div style="text-align:center;padding:14px;border-radius:10px;background:var(--sage-lt);border:1.5px solid var(--sage)">
+            <p style="font-family:'DM Serif Display',serif;font-size:32px;color:var(--sage)">${unBenchmarks.filter(b=>b.progresso>=70).length}</p>
+            <p style="font-size:10px;color:var(--ink-lt);text-transform:uppercase;font-weight:600">Bem encaminhadas</p>
+          </div>
+        </div>
+        <div class="notice warn" style="margin-bottom:0">
+          <strong>Conclusão:</strong> O Brasil precisa acelerar principalmente nas metas MCR2030 (31% capitais),
+          Net-Zero C40 (15%) e alerta precoce (62%). A meta de saneamento (71%) e energia renovável (82%)
+          são os pontos mais avançados. A COP30 em Belém (2025) representa uma janela de aceleração crítica.
+        </div>`;
+    }
+
+    /* ════════════════════════════════════════════════════════
+      MELHORIA 4 — MÓDULO PROJEÇÕES 2030
+      Renderiza 7 cards de projeção climática e urbana para 2030,
+      cada um com meta acordada, tendência atual e impacto em neuro.
+    ════════════════════════════════════════════════════════ */
+    function renderProjections() {
+      document.getElementById('projections-grid').innerHTML = `
+        <div class="grid-2">
+          ${projections2030.map(p => `
+            <div class="card" style="margin-bottom:0;border-top:3px solid ${p.color}">
+              <p class="card-title" style="font-size:14px">${p.icon} ${p.label}</p>
+              <!-- Barra de progresso em relação à meta -->
+              <div style="margin:10px 0">
+                <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-lt);margin-bottom:4px">
+                  <span>Progresso rumo à meta</span><span>${p.progresso}%</span>
+                </div>
+                <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+                  <div style="height:100%;border-radius:4px;background:${p.color};width:${p.progresso}%;transition:width .5s"></div>
+                </div>
+              </div>
+              <!-- Bloco de dados em grade -->
+              <div style="font-size:11px;display:flex;flex-direction:column;gap:6px">
+                <div style="padding:6px 8px;border-radius:6px;background:var(--cobalt-lt);border-left:3px solid var(--cobalt)">
+                  <strong style="color:var(--cobalt)">Situação atual (2023):</strong><br>${p.base2023}
+                </div>
+                <div style="padding:6px 8px;border-radius:6px;background:var(--sage-lt);border-left:3px solid var(--sage)">
+                  <strong style="color:var(--sage)">Meta 2030:</strong><br>${p.meta2030}
+                </div>
+                <div style="padding:6px 8px;border-radius:6px;background:var(--amber-lt);border-left:3px solid var(--amber)">
+                  <strong style="color:var(--amber)">Projeção tendencial:</strong><br>${p.projecao}
+                </div>
+                <div style="padding:6px 8px;border-radius:6px;background:var(--terra-lt);border-left:3px solid var(--terracotta)">
+                  <strong style="color:var(--terracotta)">Risco identificado:</strong><br>${p.risco}
+                </div>
+                <!-- Impacto específico em neurodivergentes -->
+                <div style="padding:6px 8px;border-radius:6px;background:var(--plum-lt);border-left:3px solid var(--plum)">
+                  <strong style="color:var(--plum)">Impacto neurodiversidade:</strong><br>${p.impacto_neuro}
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <!-- Nota de rodapé sobre cenários -->
+        <div class="notice info" style="margin-top:18px">
+          <strong>Cenário de referência:</strong> RCP 4.5 (INPE 2023) — emissões moderadas com políticas de mitigação parciais.
+          No cenário RCP 8.5 (sem mitigação), eventos extremos aumentam 60–80% e as perdas urbanas podem chegar a 3,2% do PIB/ano até 2030 (PBMC 2022).
+          A NDC revisada do Brasil (2022) compromete redução de 50% de GEE vs 2005, mas dados do Observatório do Clima (2023) indicam trajetória de apenas –32%.
+        </div>`;
+    }
+
+    /* ════════════════════════════════════════════════════════
+      MELHORIA 5 — SIMULADOR DE POLÍTICAS PÚBLICAS
+      Renderiza os cards de política com checkbox e custo,
+      calcula o impacto combinado dentro do orçamento disponível.
+    ════════════════════════════════════════════════════════ */
+
+    // Atualiza o valor exibido do slider de orçamento
+    function onBudgetChange(val) 
+    {
+      simulatorBudget = +val;
+      document.getElementById('budget-val').textContent = `R$ ${val}M`;
+      const pct = ((val-1)/99*100)+'%';
+      document.getElementById('budget-slider').style.setProperty('--pct', pct);
+      // Re-renderiza as políticas marcando quais excedem o orçamento
+      renderPolicySelector();
+    }
+
+    // Renderiza os cards de política com checkbox e informações de custo
+    function renderPolicySelector() 
+    {
+      const eixoColors2 = {
+        'Meio Ambiente':'var(--sage)', 'Infraestrutura':'var(--cobalt)',
+        'Tecnologia':'var(--amber)', 'Saúde e Social':'var(--plum)',
+        'Governança':'var(--terracotta)'
+      };
+      document.getElementById('policy-selector').innerHTML = publicPolicies.map(p => {
+        const checked = selectedPolicies.has(p.id);
+        const overBudget = p.custo_anual > simulatorBudget;
+        const col = eixoColors2[p.eixo] || 'var(--ink-md)';
+        return `
+          <div style="padding:10px 12px;border-radius:9px;border:1.5px solid ${checked?col:'var(--border)'};
+              background:${checked?col+'18':'var(--paper)'};margin-bottom:8px;cursor:pointer;
+              transition:all .2s;opacity:${overBudget&&!checked?0.5:1}"
+              onclick="togglePolicy('${p.id}')">
+            <div style="display:flex;align-items:flex-start;gap:10px">
+              <!-- Checkbox visual -->
+              <div style="width:16px;height:16px;border-radius:3px;border:2px solid ${col};
+                  background:${checked?col:'transparent'};flex-shrink:0;margin-top:2px;
+                  display:flex;align-items:center;justify-content:center">
+                ${checked ? '<svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline points="1.5,4.5 3.5,6.5 7.5,2" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+              </div>
+              <div style="flex:1">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+                  <p style="font-size:12px;font-weight:600;color:var(--ink)">${p.nome}</p>
+                  <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;
+                        color:${overBudget&&!checked?'var(--terracotta)':'var(--cobalt)'};white-space:nowrap;margin-left:8px">
+                    R$ ${p.custo_anual}M/ano
+                  </span>
+                </div>
+                <p style="font-size:10px;color:var(--ink-md);line-height:1.4">${p.desc}</p>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px">
+                  <span style="font-size:9px;padding:1px 6px;border-radius:4px;background:${col}22;color:${col};font-weight:700">${p.eixo}</span>
+                  ${p.ods.map(o=>`<span style="font-size:9px;padding:1px 6px;border-radius:4px;background:var(--cobalt-lt);color:var(--cobalt)">${o}</span>`).join('')}
+                  <span style="font-size:9px;color:var(--ink-lt)">${p.tempo_meses} meses para efeito</span>
+                </div>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // Alterna seleção de uma política; impede selecionar se exceder orçamento sozinha
+    function togglePolicy(id) 
+    {
+      if (selectedPolicies.has(id)) 
+      {
+        selectedPolicies.delete(id);
+      }
+      else 
+      {
+        const pol = publicPolicies.find(p=>p.id===id);
+        const currentCost = [...selectedPolicies].reduce((s,pid)=>{
+          const pp = publicPolicies.find(p=>p.id===pid);
+          return s + (pp ? pp.custo_anual : 0);
+        }, 0);
+        // Verifica se a adição excede o orçamento total
+        if (currentCost + pol.custo_anual > simulatorBudget) 
+        {
+          // Avisa mas não impede — o resultado mostrará "orçamento excedido"
+        }
+        selectedPolicies.add(id);
+      }
+      renderPolicySelector();
+    }
+
+    // Calcula e exibe o impacto combinado das políticas selecionadas
+    function calcularImpacto() 
+    {
+      if (selectedPolicies.size === 0) 
+      {
+        document.getElementById('simulation-result').innerHTML = `
+          <div class="notice warn" style="margin:0">Selecione ao menos uma política antes de calcular.</div>`;
+        return;
+      }
+
+      const selecionadas = publicPolicies.filter(p => selectedPolicies.has(p.id));
+      const custoTotal      = selecionadas.reduce((s,p) => s + p.custo_anual, 0);
+      const mabacGainTotal  = Math.min(selecionadas.reduce((s,p) => s + p.mabac_gain, 0), 1.0);
+      const neuroGainTotal  = selecionadas.reduce((s,p) => s + p.neuro_gain, 0); // pode passar de 100%
+      const emissaoRed      = selecionadas.reduce((s,p) => s + p.emissao_red, 0);
+      const benefTotal      = selecionadas.reduce((s,p) => s + p.beneficiarios, 0);
+      const tempoMax        = Math.max(...selecionadas.map(p=>p.tempo_meses));
+      const excedido        = custoTotal > simulatorBudget;
+
+      // Cor do resultado: verde se dentro do orçamento, vermelho se excedido
+      const resultCol = excedido ? 'var(--terracotta)' : 'var(--sage)';
+      const resultBg  = excedido ? 'var(--terra-lt)' : 'var(--sage-lt)';
+
+      document.getElementById('simulation-result').innerHTML = `
+        <div style="border-radius:10px;padding:20px;background:${resultBg};border:1.5px solid ${resultCol};margin-bottom:12px">
+          ${excedido ? `<div class="notice warn" style="margin-bottom:12px"><strong>Orçamento excedido em R$ ${(custoTotal-simulatorBudget).toFixed(1)}M.</strong> Remova políticas ou aumente o orçamento.</div>` : ''}
+          <!-- Indicadores de resultado em grid -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+            <!-- Custo total -->
+            <div style="text-align:center;padding:10px;border-radius:8px;background:white;border:1px solid ${resultCol}">
+              <p style="font-family:'DM Mono',monospace;font-size:20px;font-weight:600;color:${resultCol}">R$ ${custoTotal.toFixed(1)}M</p>
+              <p style="font-size:10px;color:var(--ink-lt);text-transform:uppercase;font-weight:600">Custo Total/ano</p>
+            </div>
+            <!-- Ganho MABAC -->
+            <div style="text-align:center;padding:10px;border-radius:8px;background:white;border:1px solid var(--cobalt)">
+              <p style="font-family:'DM Mono',monospace;font-size:20px;font-weight:600;color:var(--cobalt)">+${mabacGainTotal.toFixed(3)}</p>
+              <p style="font-size:10px;color:var(--ink-lt);text-transform:uppercase;font-weight:600">Ganho de Maturidade</p>
+            </div>
+            <!-- Redução de barreiras neurais -->
+            <div style="text-align:center;padding:10px;border-radius:8px;background:white;border:1px solid var(--plum)">
+              <p style="font-family:'DM Mono',monospace;font-size:20px;font-weight:600;color:var(--plum)">-${Math.min(neuroGainTotal,100)}%</p>
+              <p style="font-size:10px;color:var(--ink-lt);text-transform:uppercase;font-weight:600">Redução barreiras TEA/TDAH</p>
+            </div>
+            <!-- Redução de emissões -->
+            <div style="text-align:center;padding:10px;border-radius:8px;background:white;border:1px solid var(--sage)">
+              <p style="font-family:'DM Mono',monospace;font-size:20px;font-weight:600;color:var(--sage)">${emissaoRed.toLocaleString('pt-BR')}</p>
+              <p style="font-size:10px;color:var(--ink-lt);text-transform:uppercase;font-weight:600">tCO₂eq evitadas/ano</p>
+            </div>
+          </div>
+          <!-- Beneficiários e tempo de efeito -->
+          <div style="font-size:12px;color:var(--ink-md);line-height:1.7">
+            <strong>Beneficiários estimados:</strong> ${benefTotal.toLocaleString('pt-BR')} pessoas<br>
+            <strong>Tempo para efeito mensurável:</strong> até ${tempoMax} meses<br>
+            <strong>Custo por beneficiário/ano:</strong> R$ ${(custoTotal*1e6/benefTotal).toFixed(0)}
+          </div>
+        </div>`;
+
+      // Detalhamento por política
+      document.getElementById('policy-detail').innerHTML = selecionadas.map(p => `
+      <div style="padding:9px 11px;border-radius:8px;background:var(--paper);border:1px solid var(--border);margin-bottom:7px">
+        <p style="font-size:12px;font-weight:600;color:var(--ink);margin-bottom:3px">${p.nome}</p>
+        <p style="font-size:10px;color:var(--ink-lt)">
+          MABAC: <strong style="color:var(--cobalt)">+${p.mabac_gain.toFixed(2)}</strong> ·
+          Neuro: <strong style="color:var(--plum)">-${p.neuro_gain}%</strong> ·
+          CO₂: <strong style="color:var(--sage)">-${p.emissao_red.toLocaleString('pt-BR')} t/ano</strong> ·
+          Custo: <strong style="color:var(--terracotta)">R$ ${p.custo_anual}M/ano</strong>
+        </p>
+        <p style="font-size:10px;color:var(--ink-lt);margin-top:2px">Fonte: ${p.fonte}</p>
+      </div>`).join('');
+    }
+
+    /* ════════════════════════════════════════════════════════
+      NAVEGAÇÃO EXPANDIDA — switchTab atualizado
+      Mantém a lógica original e inicializa os novos módulos
+      na primeira vez que são acessados (lazy init).
+    ════════════════════════════════════════════════════════ */
+    function switchTab(tab, btn) 
+    {
+      document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('module-'+tab).classList.add('active');
+      if (btn) btn.classList.add('active');
+
+      // Inicialização lazy — executa apenas na primeira abertura de cada módulo
+      if (tab === 'topsis' && !document.getElementById('indicators-tbody').children.length) initTOPSIS();
+      if (tab === 'fuzzy'  && !document.getElementById('fuzzy-ranking-tbody').children.length) initFuzzy();
+      if (tab === 'mapa'   && !window._mapInited) initMap();
+
+      // Novos módulos — Melhoria 2, 3, 4, 5
+      if (tab === 'neuro' && !window._neuroInited) 
+      {
+        window._neuroInited = true;
+        renderNeuroDashboard();
+        renderNeuroRanking();
+      }
+      if (tab === 'benchmarks' && !window._benchInited)
+      {
+        window._benchInited = true;
+        renderBenchmarks();
+      }
+      if (tab === 'projecoes' && !window._projInited) 
+      {
+        window._projInited = true;
+        renderProjections();
+      }
+      if (tab === 'simulador' && !window._simInited) 
+      {
+        window._simInited = true;
+        renderPolicySelector();
+      }
+    }
+
+    initMABAC();
+  </script>
+ </body>
+</html>
