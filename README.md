@@ -61,4 +61,4 @@ To contribute: Fork the project, create a Feature Branch, and open a Pull Reques
 ## 📄 License & Contact
 **Developer:** Gabrielle Kyoko Alves Abe  
 **Scientific Support:** PGU-UEM / UTFPR  
-[Seu LinkedIn] | [Seu E-mail]
+https://www.linkedin.com/in/gabrielle-kyoko-393a99223/ | gabriellekyoko@alunos.utfpr.edu.br
