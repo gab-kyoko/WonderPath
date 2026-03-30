@@ -9,7 +9,7 @@ As this project was developed in Brazil, its native language is **Portuguese**. 
 
 ---
 
-## Overview
+## OverviewF
 WonderPath is a decision-support framework designed to bridge the gap between complex urban engineering data and inclusive public policy. Built on international standards (**ISO 37123** and **ISO 37153**) and validated by three peer-reviewed Master's dissertations (UEM/UTFPR), the platform transforms fragmented urban data into **actionable intelligence**.
 
 By integrating **Nature-based Solutions (NbS)**, multicriteria decision methods (**MABAC & TOPSIS**), and citizen science, WonderPath empowers cities to become not only more resilient to climate change but also sensory-friendly for neurodivergent populations (Autism/ADHD).
@@ -40,6 +40,16 @@ By integrating **Nature-based Solutions (NbS)**, multicriteria decision methods 
 2. Report areas with high sensory stress (noise or heat).
 3. As a manager, visualize the **Sensory Overload Heat Map** to plan Nature-based Solutions.
 
+---
+## Scientific Foundation
+
+WonderPath is built upon the collective research of the Urban Engineering Graduate Program (PGU-UEM). The platform integrates three core Master's dissertations:
+
+1. **Urban Resilience Maturity:** Developed by *Ana Lídia Corrêa (2023)*, providing the ISO 37123-based assessment framework.
+2. **Digital Technology Prioritization:** Developed by *Thallita Ferrassa (2026)*, establishing the MABAC-based decision support logic.
+3. **Social Development Impact:** Developed by *Letícia Idalgo (2026)*, evaluating the nexus between digital transformation and social equity.
+
+*The full PDF documents are available in the `/docs/scientific-base` folder.*
 ---
 
 ## Tech Stack
