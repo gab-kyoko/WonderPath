@@ -41,6 +41,7 @@ By integrating **Nature-based Solutions (NbS)**, multicriteria decision methods 
 3. As a manager, visualize the **Sensory Overload Heat Map** to plan Nature-based Solutions.
 
 ---
+
 ## Scientific Foundation
 
 WonderPath is built upon the collective research of the Urban Engineering Graduate Program (PGU-UEM). The platform integrates three core Master's dissertations:
@@ -50,6 +51,25 @@ WonderPath is built upon the collective research of the Urban Engineering Gradua
 3. **Social Development Impact:** Developed by *Letícia Idalgo (2026)*, evaluating the nexus between digital transformation and social equity.
 
 *The full PDF documents are available in the `/docs/scientific-base` folder.*
+---
+
+## Global Frameworks & Standards
+
+WonderPath is aligned with the following international standards and strategic guidelines:
+
+### International Standards (ISO)
+- **ISO 37123:2021:** Sustainable cities and communities — Indicators for resilient cities.
+- **ISO 37153:2018:** Smart community infrastructures — Maturity model for assessment and improvement.
+
+### United Nations & Global Agencies
+- **UNDRR - MCR2030:** Aligned with the "Making Cities Resilient 2030" initiative for disaster risk reduction.
+- **UNEP (PNUMA):** "State of Finance for Nature" - Supporting the implementation of Nature-based Solutions (NbS).
+- **World Bank:** "The Economics of Climate Adaptation" - Justifying data-driven investment prioritization.
+- **WHO (OMS):** "Autism Spectrum Disorder Fact Sheet" - Standardizing neurodiversity prevalence data for urban inclusion.
+
+### Technical Foundations
+- **IPCC AR6:** Chapter 12 (Central and South America) regarding climate projections and urban adaptation.
+- **MABAC & TOPSIS Methods:** Multi-criteria decision-making algorithms for objective policy ranking.
 ---
 
 ## Tech Stack
